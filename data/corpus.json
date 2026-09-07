@@ -1,0 +1,162 @@
+[
+  {
+    "id": "S0",
+    "nom": "Onboarding conversationnel",
+    "contexte": "À l'inscription · hors perturbation",
+    "note": "Crée l'historique de conversation <strong>avant</strong> la crise et pose le contrat du silence. Techniquement, cette séquence constitue l'opt-in et ouvre la fenêtre de service. Le troisième message provoque volontairement une réponse du voyageur.",
+    "blocs": {},
+    "etapes": [
+      {
+        "c": "in",
+        "t": "18:02",
+        "txt": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique. Je surveille vos lignes et je vous préviens uniquement en cas de perturbation.\n\nLe reste du temps, je reste silencieux : pas de message de ma part = tout va bien."
+      },
+      {
+        "c": "in",
+        "t": "18:02",
+        "txt": "Voici ce que vous m'avez indiqué :\n\n🚌 Vos lignes : 13 et 1\n📍 Nauticaa (Liévin) → Hôpital (Lens)\n📅 Du lundi au vendredi\n🕐 Départ vers 5h46 · prise de poste 6h30\n\nUne erreur ? Répondez MODIFIER."
+      },
+      {
+        "c": "in",
+        "t": "18:03",
+        "txt": "Deux commandes à retenir :\n\n⏸ PAUSE — je me tais pendant vos congés\n🛑 STOP — je ne vous écris plus du tout\n\nEnvie de tester ? Écrivez-moi quelque chose, je vous réponds."
+      }
+    ]
+  },
+  {
+    "id": "S1",
+    "nom": "Prévenance J-1",
+    "contexte": "Dimanche 18h27 · travaux annoncés pour lundi",
+    "note": "Le choix final n'est pas une politesse. Le FG2 indique qu'une prévenance la veille <strong>annule</strong> le besoin de plan détaillé. Le taux de réponse « DEMAIN » est un indicateur en soi.",
+    "blocs": {
+      "A": {
+        "A1": "Arrivée estimée à l'Hôpital : 6h21",
+        "A2": "Environ 8 mn de retard sur votre trajet habituel",
+        "A3": "Vous serez à l'Hôpital vers 6h21, soit 8 mn plus tard que d'habitude"
+      }
+    },
+    "etapes": [
+      {
+        "c": "in",
+        "t": "18:27",
+        "txt": "🔧 TADAO Alerte — travaux demain sur votre ligne\nAssistant automatique TADAO · info du 02/08, 18h27\n\nLa ligne 13 sera déviée demain lundi de 5h00 à 9h00 (travaux rue Hoche, à Liévin).\nLes arrêts Nauticaa quai 3 et Centre Commercial ne seront pas desservis.\n\nPour votre départ de 5h46 :\n{{A}}\n\nJe peux vous préparer une alternative maintenant, ou vous rappeler demain 30 mn avant votre départ.\n\n👉 Répondez MAINTENANT ou DEMAIN"
+      }
+    ]
+  },
+  {
+    "id": "S2",
+    "nom": "Perturbation avant le départ",
+    "contexte": "Lundi 5h18 · départ 5h46 · prise de poste 6h30",
+    "note": "Séquence principale. Corridor et horaires <strong>réels</strong> (NeTEx TADAO). Les deux options partent du même bus et divergent à la correspondance : marcher 140 m et être à l'heure, ou marcher 58 m et arriver en retard. <strong>B se teste en inter-sujets</strong> — un bras par variante.",
+    "blocs": {
+      "A": {
+        "A1": "Arrivée estimée à l'Hôpital : 6h39",
+        "A2": "Environ 26 mn de retard sur votre trajet habituel",
+        "A3": "Vous serez à l'Hôpital vers 6h39, soit 26 mn plus tard que d'habitude"
+      },
+      "C": {
+        "C1": "Bon trajet. Je vous préviens si la situation change.",
+        "C2": "La situation peut encore évoluer : je vous préviens en cas de changement, et pensez à vérifier l'affichage à l'arrêt."
+      }
+    },
+    "etapes": [
+      {
+        "c": "in",
+        "t": "05:18",
+        "txt": "⚠️ TADAO Alerte — perturbation sur votre ligne\nAssistant automatique TADAO · mis à jour à 5h16\n\nLa ligne 13 est interrompue entre Liévin Centre et Lens I.U.T (véhicule immobilisé).\nLe prochain passage de 5h46 à Nauticaa est supprimé.\n\nPour votre trajet vers l'Hôpital :\n{{A}}\n\nJe vous trouve une autre solution ?\n👉 Répondez OUI"
+      },
+      {
+        "c": "out",
+        "t": "05:19",
+        "txt": "OUI"
+      },
+      {
+        "c": "in",
+        "t": "05:19",
+        "si": {
+          "B": [
+            "B1"
+          ]
+        },
+        "txt": "Très bien. Je récapitule :\n\n📍 Départ : Nauticaa, à Liévin\n🏁 Arrivée : Hôpital, à Lens\n🕕 Vous devez y être pour 6h30\n🚪 Départ prévu vers 5h46\n\nC'est bien cela ?\n👉 OUI / NON"
+      },
+      {
+        "c": "in",
+        "t": "05:19",
+        "si": {
+          "B": [
+            "B2"
+          ]
+        },
+        "txt": "Vous partez de Nauticaa pour l'Hôpital de Lens, pour 6h30 ?\n\n👉 OUI / NON, autre trajet"
+      },
+      {
+        "c": "out",
+        "t": "05:20",
+        "si": {
+          "B": [
+            "B1",
+            "B2"
+          ]
+        },
+        "txt": "OUI"
+      },
+      {
+        "c": "in",
+        "t": "05:20",
+        "txt": "Voici 2 solutions, de la plus rapide à la plus lente :\n\n━━━━━━━━━━━━━━━━━━\n1️⃣  Arrivée 6h21 — vous êtes à l'heure\n🚌 Ligne 1 → Noyelles-Godault, puis ligne 3 → Vendin-le-Vieil\n🔄 1 changement à Bollaert Delelis\n🚶 2 mn de marche\n\n━━━━━━━━━━━━━━━━━━\n2️⃣  Arrivée 6h39 — 9 mn après votre prise de poste\n🚌 Ligne 1 → Noyelles-Godault, puis ligne 41 → Béhal-Jean Zay\n🔄 1 changement à Parc Louvre-Lens\n🚶 1 mn de marche\n\n👉 Répondez 1 ou 2 pour le détail",
+        "sms": "Voici 2 solutions, de la plus rapide a la plus lente :\n\nOPTION 1 - Arrivee 6h21, vous etes a l'heure\nLigne 1 dir. Noyelles-Godault, puis ligne 3 dir. Vendin-le-Vieil\n1 changement a Bollaert Delelis\n2 mn de marche\n\nOPTION 2 - Arrivee 6h39, 9 mn apres votre prise de poste\nLigne 1 dir. Noyelles-Godault, puis ligne 41 dir. Behal-Jean Zay\n1 changement a Parc Louvre-Lens\n1 mn de marche\n\nRepondez 1 ou 2 pour le detail"
+      },
+      {
+        "c": "out",
+        "t": "05:21",
+        "txt": "1"
+      },
+      {
+        "c": "in",
+        "t": "05:21",
+        "txt": "Option 1 — partez dans 42 minutes ⏱\n\n🚌 Ligne 1 · direction Noyelles-Godault\n   Nauticaa quai 2 · départ 6h03\n   (suivants : 6h18, 6h33)\n\n🔄 Descendez à Bollaert Delelis · 6h15\n\n🚶 Marchez 2 mn (140 m) jusqu'à Faculté Jean Perrin\n   📍 Itinéraire à pied : [lien]\n\n🚌 Ligne 3 · direction Vendin-le-Vieil\n   Départ 6h19\n\n🏁 Arrivée Hôpital : 6h21\n\nInfo mise à jour à 5h21.\n{{C}}"
+      }
+    ]
+  },
+  {
+    "id": "S3",
+    "nom": "Perturbation en cours de trajet",
+    "contexte": "Lundi 6h07 · le voyageur est déjà parti",
+    "note": "Le cas le plus fréquent en réel, et le plus difficile. Le QCM remplace le partage de position : pour un abonné, les positions probables se déduisent de l'itinéraire déclaré et de l'heure. <strong>C'est ce qui distingue le dispositif d'un trip-planner.</strong>",
+    "blocs": {},
+    "etapes": [
+      {
+        "c": "in",
+        "t": "06:07",
+        "txt": "⚠️ TADAO Alerte — perturbation en cours\nAssistant automatique TADAO · mis à jour à 6h07\n\nLa ligne 1 est bloquée à hauteur de Bollaert Delelis (accident de circulation).\n\nSi vous êtes à bord ou à l'arrêt, votre arrivée est retardée d'environ 20 mn.\n\nJe vous aide à contourner ?\n👉 Répondez OUI"
+      },
+      {
+        "c": "out",
+        "t": "06:08",
+        "txt": "OUI"
+      },
+      {
+        "c": "in",
+        "t": "06:08",
+        "txt": "Où êtes-vous en ce moment ?\n\n1️⃣  Encore à Nauticaa\n2️⃣  Déjà dans le bus de la ligne 1\n3️⃣  Ailleurs — envoyez-moi votre position 📍\n\n👉 Répondez 1, 2 ou 3",
+        "sms": "Ou etes-vous en ce moment ?\n\n1 - Encore a Nauticaa\n2 - Deja dans le bus de la ligne 1\n3 - Ailleurs, ecrivez-moi le nom de l'arret le plus proche\n\nRepondez 1, 2 ou 3",
+        "perte": "Le partage de position n'existe pas en SMS. L'option 3 devient une saisie manuelle."
+      }
+    ]
+  },
+  {
+    "id": "S4",
+    "nom": "Reprise du trafic",
+    "contexte": "Lundi 7h12 · fin d'incident",
+    "note": "Séquence courte, mentionnée par un seul participant. C'est pourtant le <strong>pendant indispensable</strong> du contrat de silence posé à l'inscription : sans elle, le voyageur reste en alerte toute la journée.",
+    "blocs": {},
+    "etapes": [
+      {
+        "c": "in",
+        "t": "07:12",
+        "txt": "✅ TADAO Alerte — trafic rétabli\nAssistant automatique TADAO · 7h12\n\nLa ligne 13 circule à nouveau normalement entre Liévin Centre et Lens I.U.T.\n\nVotre retour de cet après-midi n'est pas concerné.\nBonne journée."
+      }
+    ]
+  }
+]

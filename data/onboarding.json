@@ -1,0 +1,95 @@
+{
+  "variantes": {
+    "V1": {
+      "id": "V1",
+      "nom": "Conversationnelle",
+      "type": "chat",
+      "resume": "Le bot pose les questions en texte libre. Aucun formulaire. Variante témoin : c'est elle qui mesure le coût réel en messages et le point d'abandon.",
+      "accueil": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique. Je surveille vos lignes et je vous préviens en cas de perturbation.\n\nLe reste du temps je reste silencieux : pas de message de ma part = tout va bien.\n\nPour commencer, quelles lignes prenez-vous habituellement, et à quel moment de la journée ?"
+    },
+    "V2": {
+      "id": "V2",
+      "nom": "Flow justifié",
+      "type": "flow",
+      "justif": true,
+      "resume": "Formulaire natif dans le fil. Chaque champ est accompagné de son usage. Teste l'hypothèse : la justification réduit-elle l'effet inquisiteur ?",
+      "accueil": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique, au service du réseau TADAO. Je vous préviens en cas de perturbation sur vos lignes — et je reste silencieux le reste du temps.\n\nQuelques questions et c'est réglé."
+    },
+    "V3": {
+      "id": "V3",
+      "nom": "Flow sec",
+      "type": "flow",
+      "justif": false,
+      "resume": "Mêmes champs, mêmes valeurs par défaut, aucune justification. Le comparateur direct de V2.",
+      "accueil": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique, au service du réseau TADAO. Je vous préviens en cas de perturbation sur vos lignes — et je reste silencieux le reste du temps.\n\nQuelques questions et c'est réglé."
+    }
+  },
+  "perimetres": {
+    "D1": {
+      "id": "D1",
+      "nom": "Minimal",
+      "arrets": false,
+      "resume": "Lignes, sens, jours, créneau. Suffit à notifier. En contrepartie, l'assistant devra redemander origine et destination à <strong>chaque</strong> perturbation."
+    },
+    "D2": {
+      "id": "D2",
+      "nom": "Trajet complet",
+      "arrets": true,
+      "resume": "Ajoute les arrêts de montée et de descente. Onboarding plus long, mais l'assistant n'a plus qu'à confirmer d'un tap — c'est ce qui distingue le dispositif d'un trip-planner."
+    }
+  },
+  "jours": [
+    {
+      "k": "lun",
+      "l": "L"
+    },
+    {
+      "k": "mar",
+      "l": "M"
+    },
+    {
+      "k": "mer",
+      "l": "M"
+    },
+    {
+      "k": "jeu",
+      "l": "J"
+    },
+    {
+      "k": "ven",
+      "l": "V"
+    },
+    {
+      "k": "sam",
+      "l": "S"
+    },
+    {
+      "k": "dim",
+      "l": "D"
+    }
+  ],
+  "creneauxMatin": [
+    "avant 5h30",
+    "5h30 – 6h30",
+    "6h30 – 7h30",
+    "7h30 – 8h30",
+    "8h30 – 9h30",
+    "après 9h30"
+  ],
+  "creneauxSoir": [
+    "avant 13h",
+    "13h – 15h",
+    "15h – 17h",
+    "17h – 19h",
+    "19h – 21h",
+    "après 21h"
+  ],
+  "relances": {
+    "lignes": "Je n'ai pas identifié de numéro de ligne. Pouvez-vous me donner le ou les numéros ? (par exemple : 1, 13)",
+    "sens": "Est-ce le matin, le soir, ou les deux ?",
+    "creneauM": "Vers quelle heure partez-vous le matin ?",
+    "creneauS": "Et vers quelle heure repartez-vous le soir ?",
+    "montee": "À quel arrêt montez-vous habituellement ?",
+    "descente": "Et à quel arrêt descendez-vous ?"
+  }
+}

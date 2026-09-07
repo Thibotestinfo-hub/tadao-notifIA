@@ -1,0 +1,53 @@
+{
+  "hypotheses": {
+    "abonnes": 2000,
+    "perturbationsParAn": 20,
+    "prixTemplate": 0.045,
+    "prixService": 0.01,
+    "tauxNonPertinent": 15
+  },
+  "trafic": {
+    "D1": {
+      "template": 1,
+      "service": 6,
+      "octets": 2600,
+      "note": "alerte + 3 aller-retours de qualification"
+    },
+    "D2": {
+      "template": 1,
+      "service": 3,
+      "octets": 1500,
+      "note": "alerte + confirmation + itinéraire"
+    }
+  },
+  "onboardingReference": {
+    "V1": {
+      "template": 1,
+      "service": 7
+    },
+    "V2": {
+      "template": 1,
+      "service": 2
+    },
+    "V3": {
+      "template": 1,
+      "service": 2
+    }
+  },
+  "gloses": {
+    "A": {
+      "A1": "Horaire absolu, sans référence à l'habitude.",
+      "A2": "Écart relatif au trajet habituel.",
+      "A3": "Horaire absolu + écart, avec réassurance implicite."
+    },
+    "B": {
+      "B1": "Récapitulatif en quatre lignes.",
+      "B2": "Une question fermée, un tap.",
+      "B3": "Aucune confirmation, on va droit aux alternatives."
+    },
+    "C": {
+      "C1": "L'assistant annonce, sans réserve.",
+      "C2": "L'assistant signale que la situation peut évoluer."
+    }
+  }
+}

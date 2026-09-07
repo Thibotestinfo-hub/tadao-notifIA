@@ -7,7 +7,7 @@ traduire la contrainte en paramètres puis reformuler le résultat.
 import json, math, heapq
 from collections import defaultdict
 
-R = json.load(open('/home/claude/reseau.json'))
+R = json.load(open('data/reseau_complet.json'))
 STOPS, COURSES = R['stops'], R['courses']
 VITESSE_MARCHE = 1.2  # m/s (~4,3 km/h)
 

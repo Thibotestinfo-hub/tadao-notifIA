@@ -1,0 +1,6 @@
+dist/
+data/reseau_complet.json
+netex/
+*.zip
+__pycache__/
+.DS_Store

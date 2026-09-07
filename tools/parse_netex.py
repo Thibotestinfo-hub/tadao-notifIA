@@ -5,7 +5,7 @@ from collections import defaultdict
 import xml.etree.ElementTree as ET
 
 NS = {'n': 'http://www.netex.org.uk/netex'}
-D = '/home/claude/netex'
+D = os.environ.get('NETEX_DIR', 'netex')
 
 def txt(el, tag):
     x = el.find('n:' + tag, NS)

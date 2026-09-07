@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console d'animation — Assistant mobilité dynamique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="enveloppe">
+
+  <div class="bandeau">
+    <h1>Console d'animation</h1>
+    <span class="sous">Assistant mobilité dynamique</span>
+    <span class="marque">Jalon 1 · maquettes vivantes</span>
+  </div>
+
+  <div class="onglets" role="tablist">
+    <button role="tab" id="ongOnb" aria-selected="true">Onboarding</button>
+    <button role="tab" id="ongSeq" aria-selected="false">Séquences</button>
+  </div>
+
+  <!-- ================= MODE ONBOARDING ================= -->
+  <div class="grille" id="vueOnb">
+    <div class="colonne gauche">
+      <div class="bloc">
+        <h2>Bras de test</h2>
+        <div id="listeVar"></div>
+      </div>
+      <div class="bloc">
+        <h2>Périmètre collecté (D)</h2>
+        <div id="listePer"></div>
+      </div>
+      <div class="bloc">
+        <h2>Ce que ce bras mesure</h2>
+        <div class="dedans"><p class="note" id="noteVar"></p></div>
+      </div>
+      <div class="bloc">
+        <h2>Participant</h2>
+        <div class="dedans">
+          <input class="ident" id="ident" placeholder="Identifiant (ex. P-04)" autocomplete="off">
+          <button class="bouton creux" id="enregistrer" style="width:100%">Enregistrer la passation</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="colonne centre">
+      <div class="horloge">
+        <div class="heure" id="chrono">0:00</div>
+        <div class="contexte" id="ctxOnb">chronomètre de passation</div>
+      </div>
+      <div class="scene">
+        <div class="tel">
+          <div class="entete">
+            <div class="pastille">T</div>
+            <div>
+              <div class="qui">TADAO Alerte</div>
+              <div class="etat">assistant automatique</div>
+            </div>
+          </div>
+          <div class="fil" id="filOnb"></div>
+          <div class="saisie" id="saisieOnb">
+            <input id="entree" placeholder="Écrivez votre réponse…" autocomplete="off">
+            <button id="envoyer">Envoyer</button>
+          </div>
+        </div>
+        <div class="transport">
+          <button class="bouton" id="lancerOnb">Lancer la passation</button>
+          <button class="bouton creux" id="resetOnb">Réinitialiser</button>
+          <button class="bouton rouge" id="abandonOnb">Marquer un abandon</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="colonne droite">
+      <div class="bloc">
+        <h2>Mesures en direct</h2>
+        <div class="dedans">
+          <div class="mesures">
+            <div class="mesure"><div class="v" id="mTemps">—</div><div class="k">secondes</div></div>
+            <div class="mesure"><div class="v" id="mInter">0</div><div class="k">interactions</div></div>
+            <div class="mesure"><div class="v" id="mBot">0</div><div class="k">msg. assistant</div></div>
+            <div class="mesure"><div class="v" id="mUser">0</div><div class="k">msg. voyageur</div></div>
+          </div>
+          <div class="champ-suivi" id="suiviChamps"></div>
+        </div>
+      </div>
+      <div class="bloc">
+        <h2>Passations</h2>
+        <div class="dedans" id="tablePassations"><p class="vide">Aucune passation enregistrée.</p></div>
+      </div>
+      <div class="bloc">
+        <h2>Coût &amp; sobriété</h2>
+        <div class="dedans">
+          <div class="hyp">
+            <label for="hAb">Abonnés</label><input id="hAb" type="number" value="2000" min="1">
+            <label for="hPe">Perturbations / an</label><input id="hPe" type="number" value="20" min="0">
+            <label for="hTp">€ template (alerte)</label><input id="hTp" type="number" value="0.045" step="0.005" min="0">
+            <label for="hSv">€ message de service</label><input id="hSv" type="number" value="0.010" step="0.005" min="0">
+            <label for="hNp">% alertes non pertinentes</label><input id="hNp" type="number" value="15" min="0" max="100">
+          </div>
+          <div id="tdb"></div>
+          <p class="avert">Tarifs indicatifs à confirmer auprès de votre BSP : ils varient par pays et par catégorie, et la facturation des messages de service change au 1<sup>er</sup> octobre 2026.</p>
+        </div>
+      </div>
+      <div class="bloc">
+        <h2>Débriefing</h2>
+        <div class="dedans">
+          <p class="note">Après le vécu, présentez les trois variantes côte à côte pour la préférence déclarée. Ne faites jamais <strong>vivre</strong> deux bras à la même personne : l'effet d'apprentissage rend les mesures inexploitables.</p>
+          <button class="bouton creux" id="exportOnb" style="width:100%;margin-top:9px">Exporter en CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODE SÉQUENCES ================= -->
+  <div class="grille cache" id="vueSeq">
+    <div class="colonne gauche">
+      <div class="bloc"><h2>Séquence</h2><div id="listeSeq"></div></div>
+      <div class="bloc"><h2>Note de conception</h2><div class="dedans"><p class="note" id="noteSeq"></p></div></div>
+    </div>
+    <div class="colonne centre">
+      <div class="horloge">
+        <div class="heure" id="horloge">—</div>
+        <div class="contexte" id="contexte"></div>
+      </div>
+      <div class="scene">
+        <div class="tel">
+          <div class="entete">
+            <div class="pastille">T</div>
+            <div><div class="qui">TADAO Alerte</div><div class="etat" id="etatTel">assistant automatique</div></div>
+          </div>
+          <div class="fil" id="fil"></div>
+        </div>
+        <div class="transport">
+          <button class="bouton" id="suivant">Message suivant</button>
+          <button class="bouton creux" id="rejouer">Rejouer</button>
+          <button class="bouton creux" id="toutCopier">Tout copier</button>
+          <span class="compteur" id="compteur">0 / 0</span>
+        </div>
+      </div>
+    </div>
+    <div class="colonne droite">
+      <div class="bloc"><h2>Canal</h2><div class="dedans">
+        <div class="choix large" id="canal">
+          <button data-canal="wa" aria-pressed="true">WhatsApp</button>
+          <button data-canal="sms" aria-pressed="false">SMS</button>
+        </div></div>
+      </div>
+      <div class="bloc"><h2>Profil actif</h2><div class="dedans">
+        <p class="note" id="profilActif">Aucun profil collecté. Les séquences utilisent le corridor par défaut.</p>
+      </div></div>
+      <div class="bloc">
+        <h2>Variantes</h2>
+        <div class="dedans">
+          <div class="reglage">
+            <div class="titre">A · Formulation de l'arrivée</div>
+            <div class="glose" id="gloseA"></div>
+            <div class="choix" data-var="A">
+              <button data-val="A1" aria-pressed="false">A1</button>
+              <button data-val="A2" aria-pressed="false">A2</button>
+              <button data-val="A3" aria-pressed="true">A3</button>
+            </div>
+          </div>
+          <div class="reglage">
+            <div class="titre">B · Confirmation intermédiaire</div>
+            <div class="glose" id="gloseB"></div>
+            <div class="choix" data-var="B">
+              <button data-val="B1" aria-pressed="false">B1</button>
+              <button data-val="B2" aria-pressed="false">B2</button>
+              <button data-val="B3" aria-pressed="true">B3</button>
+            </div>
+          </div>
+          <div class="reglage">
+            <div class="titre">C · Niveau de prudence</div>
+            <div class="glose" id="gloseC"></div>
+            <div class="choix" data-var="C">
+              <button data-val="C1" aria-pressed="true">C1</button>
+              <button data-val="C2" aria-pressed="false">C2</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bloc"><h2>Coût du passage en SMS</h2><div class="dedans cout" id="cout"></div></div>
+    </div>
+  </div>
+
+  <div class="pied">
+    <span>← → pour circuler dans les séquences</span>
+    <span>Survolez une bulle pour la copier</span>
+    <span>Rendu volontairement générique : ce n'est pas une reproduction d'interface</span>
+  </div>
+</div>
+
+<script src="js/donnees.js"></script>
+<script src="js/onboarding.js"></script>
+<script src="js/console.js"></script>
+<script src="js/tableau-bord.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

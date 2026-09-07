@@ -78,8 +78,8 @@ def main():
     print(f"Arrêts logiques : {len(logique)}")
 
     json.dump({'stops': stops, 'courses': courses, 'lignes': lignes},
-              open('/home/claude/reseau.json', 'w'), ensure_ascii=False)
-    print("-> /home/claude/reseau.json")
+              open('data/reseau_complet.json', 'w'), ensure_ascii=False)
+    print("-> data/reseau_complet.json")
 
 if __name__ == '__main__':
     main()

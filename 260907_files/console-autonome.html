@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console d'animation — Assistant mobilité dynamique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nuit:#141B24; --panneau:#1D2733; --panneau-haut:#25313F; --trait:#33404F;
+  --texte:#C9D4E0; --texte-faible:#7E8C9C; --ambre:#F2A413; --ambre-sourd:#8A6212;
+  --azur:#5C9BD6; --vert:#6FBF73; --rouge:#E4805C;
+  --ecran:#EDE9E3; --bulle-in:#FFFFFF; --bulle-out:#D9EFC7; --encre:#111B21;
+  --sig:"Barlow Condensed",Impact,sans-serif; --corps:"Barlow",system-ui,sans-serif;
+  --tel:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--nuit);color:var(--texte);font-family:var(--corps);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;padding:20px}
+.enveloppe{max-width:1240px;margin:0 auto}
+
+/* bandeau + onglets */
+.bandeau{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+  border-bottom:1px solid var(--trait);padding-bottom:12px;margin-bottom:16px}
+.bandeau h1{font-family:var(--sig);font-weight:700;font-size:26px;letter-spacing:.04em;
+  text-transform:uppercase;margin:0;color:#EEF3F8}
+.bandeau .sous{font-family:var(--sig);font-weight:500;font-size:15px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--texte-faible)}
+.bandeau .marque{margin-left:auto;font-family:var(--sig);font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ambre-sourd)}
+.onglets{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--trait)}
+.onglets button{font-family:var(--sig);font-weight:600;font-size:14px;letter-spacing:.16em;
+  text-transform:uppercase;background:none;border:0;border-bottom:2px solid transparent;
+  color:var(--texte-faible);padding:9px 18px;cursor:pointer;transition:.12s}
+.onglets button:hover{color:var(--texte)}
+.onglets button[aria-selected="true"]{color:var(--ambre);border-bottom-color:var(--ambre)}
+
+.grille{display:grid;grid-template-columns:230px minmax(0,1fr) 260px;gap:18px;align-items:start}
+.colonne{display:flex;flex-direction:column;gap:14px}
+.bloc{background:var(--panneau);border:1px solid var(--trait);border-radius:3px;overflow:hidden}
+.bloc > h2{font-family:var(--sig);font-weight:600;font-size:12px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--texte-faible);margin:0;padding:9px 14px;
+  background:var(--panneau-haut);border-bottom:1px solid var(--trait)}
+.bloc .dedans{padding:12px 14px}
+
+.seq{display:block;width:100%;text-align:left;background:none;border:0;
+  border-bottom:1px solid var(--trait);padding:11px 14px;cursor:pointer;
+  color:var(--texte);font-family:var(--corps);transition:background .12s}
+.seq:last-child{border-bottom:0}
+.seq:hover{background:#243040}
+.seq .code{font-family:var(--sig);font-weight:700;font-size:13px;letter-spacing:.12em;
+  color:var(--texte-faible);display:block}
+.seq .nom{font-size:13.5px;line-height:1.3;display:block;margin-top:2px}
+.seq[aria-pressed="true"]{background:#2B3949;box-shadow:inset 3px 0 0 var(--ambre)}
+.seq[aria-pressed="true"] .code{color:var(--ambre)}
+
+.horloge{text-align:center;padding:14px 0 4px}
+.horloge .heure{font-family:var(--sig);font-weight:700;font-size:70px;line-height:.9;
+  letter-spacing:.02em;color:var(--ambre);font-variant-numeric:tabular-nums;
+  display:inline-block;text-shadow:0 0 26px rgba(242,164,19,.22)}
+.horloge .heure.bat{animation:bat .22s ease-out}
+@keyframes bat{from{opacity:.15;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.horloge .contexte{font-family:var(--sig);font-size:13px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--texte-faible);margin-top:8px}
+
+/* téléphone */
+.scene{display:flex;flex-direction:column;align-items:center}
+.tel{width:340px;max-width:100%;background:var(--ecran);border:1px solid #0B1218;
+  border-radius:26px;box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 0 7px #0B1218;
+  overflow:hidden;font-family:var(--tel);color:var(--encre)}
+.tel .entete{background:#F2F0EC;border-bottom:1px solid #D6D2CC;padding:11px 12px;
+  display:flex;align-items:center;gap:10px}
+.tel .pastille{width:34px;height:34px;border-radius:50%;background:#2C4C64;color:#fff;
+  display:grid;place-items:center;font-family:var(--sig);font-weight:700;font-size:17px;flex:none}
+.tel .qui{font-size:14.5px;font-weight:600;line-height:1.15}
+.tel .etat{font-size:11.5px;color:#6B7480;margin-top:1px}
+.fil{padding:14px 11px 18px;min-height:470px;max-height:470px;overflow-y:auto;
+  background:radial-gradient(circle at 18% 12%,rgba(0,0,0,.022) 0 1.5px,transparent 1.5px),
+             radial-gradient(circle at 68% 42%,rgba(0,0,0,.022) 0 1.5px,transparent 1.5px);
+  background-size:44px 44px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){.fil{scroll-behavior:auto}}
+.bulle{max-width:88%;padding:7px 10px 5px;border-radius:8px;font-size:13.6px;line-height:1.42;
+  white-space:pre-wrap;box-shadow:0 1px 1px rgba(0,0,0,.09);position:relative;
+  animation:pousse .2s ease-out}
+@keyframes pousse{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.bulle,.horloge .heure.bat{animation:none}}
+.bulle.in{background:var(--bulle-in);align-self:flex-start;border-top-left-radius:2px}
+.bulle.out{background:var(--bulle-out);align-self:flex-end;border-top-right-radius:2px}
+.bulle .tampon{font-size:10.5px;color:#77808A;text-align:right;margin-top:3px}
+.bulle .copier{position:absolute;top:5px;right:6px;opacity:0;background:rgba(17,27,33,.07);
+  border:0;border-radius:4px;font-family:var(--sig);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;padding:3px 6px;cursor:pointer;color:#48535E;transition:opacity .15s}
+.bulle:hover .copier,.bulle:focus-within .copier{opacity:1}
+.fil.sms{background:#F7F6F4;background-image:none}
+.fil.sms .bulle{border-radius:16px;font-size:13.4px;box-shadow:none}
+.fil.sms .bulle.in{background:#E7E5E4;border-top-left-radius:16px}
+.fil.sms .bulle.out{background:#2C7BE5;color:#fff;border-top-right-radius:16px}
+.fil.sms .bulle.out .tampon{color:rgba(255,255,255,.72)}
+
+/* saisie dans le téléphone */
+.saisie{display:flex;gap:7px;padding:9px 10px;background:#F2F0EC;border-top:1px solid #D6D2CC}
+.saisie input{flex:1;border:1px solid #CFCBC5;border-radius:16px;padding:7px 12px;
+  font-family:var(--tel);font-size:13.5px;background:#fff;color:var(--encre);min-width:0}
+.saisie button{border:0;border-radius:16px;background:#2C4C64;color:#fff;padding:7px 14px;
+  font-family:var(--sig);font-size:12px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.saisie input:disabled,.saisie button:disabled{opacity:.45;cursor:default}
+
+/* carte Flow dans le fil */
+.flowcard{background:#fff;border-radius:10px;padding:12px;align-self:stretch;
+  box-shadow:0 1px 2px rgba(0,0,0,.12);font-size:13.4px}
+.flowcard h3{font-size:14px;margin:0 0 3px;font-weight:600}
+.flowcard .intro{color:#5A646E;font-size:12.5px;margin-bottom:11px;line-height:1.4}
+.flowcard .champ{margin-bottom:13px}
+.flowcard .lab{font-weight:600;font-size:13px;margin-bottom:2px}
+.flowcard .pourquoi{font-size:11.8px;color:#6B7480;line-height:1.35;margin-bottom:6px;font-style:italic}
+.flowcard .grilleL{display:flex;flex-wrap:wrap;gap:5px}
+.puce{border:1.5px solid transparent;border-radius:5px;min-width:34px;padding:5px 7px;
+  font-family:var(--sig);font-weight:700;font-size:14px;color:#fff;cursor:pointer;
+  opacity:.34;transition:.12s;text-align:center}
+.puce[aria-pressed="true"]{opacity:1;border-color:#111B21}
+.chip{border:1px solid #CFCBC5;background:#fff;border-radius:14px;padding:5px 11px;
+  font-size:12.5px;cursor:pointer;color:#3A444E;transition:.12s;font-family:var(--tel)}
+.chip[aria-pressed="true"]{background:#2C4C64;border-color:#2C4C64;color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.flowcard select{width:100%;padding:7px 9px;border:1px solid #CFCBC5;border-radius:6px;
+  font-family:var(--tel);font-size:13px;background:#fff;color:var(--encre)}
+.flowcard .envoyer{width:100%;border:0;border-radius:8px;background:#2C4C64;color:#fff;
+  padding:10px;font-family:var(--sig);font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;cursor:pointer;margin-top:3px}
+.flowcard .envoyer:disabled{background:#B4BBC2;cursor:default}
+.ouvrirflow{width:100%;border:0;border-top:1px solid #E3E0DB;background:#fff;color:#2C7BE5;
+  padding:9px;font-size:13.5px;cursor:pointer;border-radius:0 0 8px 8px;font-family:var(--tel);
+  font-weight:500}
+
+.transport{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+.bouton{font-family:var(--sig);font-weight:600;font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;background:var(--ambre);color:#20180A;border:0;border-radius:3px;
+  padding:10px 20px;cursor:pointer;transition:filter .12s}
+.bouton:hover{filter:brightness(1.12)}
+.bouton:disabled{background:var(--trait);color:var(--texte-faible);cursor:default}
+.bouton.creux{background:none;border:1px solid var(--trait);color:var(--texte)}
+.bouton.creux:hover{border-color:var(--texte-faible);filter:none}
+.bouton.rouge{background:none;border:1px solid #5E3E36;color:var(--rouge)}
+.compteur{font-family:var(--sig);font-size:13px;letter-spacing:.14em;color:var(--texte-faible);
+  font-variant-numeric:tabular-nums}
+
+.reglage{margin-bottom:15px}
+.reglage:last-child{margin-bottom:0}
+.reglage .titre{font-family:var(--sig);font-weight:600;font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--texte);margin-bottom:2px}
+.reglage .glose{font-size:12.5px;color:var(--texte-faible);line-height:1.35;margin-bottom:7px}
+.choix{display:flex;gap:5px;flex-wrap:wrap}
+.choix button{flex:1 1 auto;min-width:44px;font-family:var(--sig);font-weight:600;font-size:13px;
+  letter-spacing:.1em;background:#2A3646;border:1px solid var(--trait);color:var(--texte-faible);
+  padding:7px 9px;border-radius:3px;cursor:pointer;transition:.12s}
+.choix button:hover{color:var(--texte)}
+.choix button[aria-pressed="true"]{background:var(--ambre);border-color:var(--ambre);color:#20180A}
+.choix.large button{flex:1 1 40%}
+
+.cout{font-size:13px;line-height:1.45}
+.cout .chiffre{font-family:var(--sig);font-weight:700;font-size:30px;color:var(--ambre);
+  font-variant-numeric:tabular-nums;line-height:1}
+.cout .unite{font-family:var(--sig);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--texte-faible)}
+.cout ul{margin:9px 0 0;padding-left:16px;color:var(--texte-faible)}
+.cout li{margin-bottom:3px}
+.cout .perte{color:var(--rouge)}
+.note{font-size:13px;line-height:1.5;color:var(--texte-faible)}
+.note strong{color:var(--texte);font-weight:600}
+
+/* mesures */
+.mesures{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.mesure{background:#232F3D;border:1px solid var(--trait);border-radius:3px;padding:8px 10px}
+.mesure .v{font-family:var(--sig);font-weight:700;font-size:26px;line-height:1;color:var(--ambre);
+  font-variant-numeric:tabular-nums}
+.mesure .k{font-family:var(--sig);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--texte-faible);margin-top:3px}
+.champ-suivi{font-size:12.5px;color:var(--texte-faible);margin-top:10px;line-height:1.6}
+.champ-suivi .ok{color:var(--vert)}
+.champ-suivi .ko{color:var(--texte-faible);opacity:.55}
+
+table.passations{width:100%;border-collapse:collapse;font-size:12.5px}
+table.passations th{font-family:var(--sig);font-size:10.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--texte-faible);text-align:left;padding:5px 6px;
+  border-bottom:1px solid var(--trait);font-weight:600}
+table.passations td{padding:5px 6px;border-bottom:1px solid #2A3542;font-variant-numeric:tabular-nums}
+table.passations tr:last-child td{border-bottom:0}
+.vide{color:var(--texte-faible);font-size:12.5px;font-style:italic}
+input.ident{width:100%;background:#2A3646;border:1px solid var(--trait);color:var(--texte);
+  border-radius:3px;padding:7px 9px;font-family:var(--corps);font-size:13px;margin-bottom:8px}
+
+/* tableau de bord */
+.hyp{display:grid;grid-template-columns:1fr auto;gap:5px 8px;align-items:center;
+  font-size:12.5px;color:var(--texte-faible);margin-bottom:11px}
+.hyp input{width:74px;background:#2A3646;border:1px solid var(--trait);color:var(--texte);
+  border-radius:3px;padding:4px 6px;font-family:var(--corps);font-size:12.5px;
+  font-variant-numeric:tabular-nums;text-align:right}
+.ligne-res{display:flex;justify-content:space-between;align-items:baseline;
+  padding:5px 0;border-bottom:1px solid #2A3542;font-size:12.5px}
+.ligne-res:last-child{border-bottom:0}
+.ligne-res .val{font-family:var(--sig);font-weight:700;font-size:16px;
+  font-variant-numeric:tabular-nums;color:var(--texte)}
+.ligne-res.fort .val{color:var(--ambre);font-size:20px}
+.ligne-res.gain .val{color:var(--vert)}
+.sep-titre{font-family:var(--sig);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--texte-faible);margin:11px 0 4px;padding-top:9px;border-top:1px solid var(--trait)}
+.avert{font-size:11.8px;line-height:1.45;color:var(--texte-faible);margin-top:10px;
+  padding-top:9px;border-top:1px solid var(--trait);font-style:italic}
+.pied{margin-top:22px;padding-top:12px;border-top:1px solid var(--trait);font-size:12.5px;
+  color:var(--texte-faible);display:flex;gap:18px;flex-wrap:wrap}
+:focus-visible{outline:2px solid var(--azur);outline-offset:2px}
+.cache{display:none !important}
+
+@media (max-width:980px){
+  .grille{grid-template-columns:1fr}
+  .colonne.gauche{order:2}.colonne.centre{order:1}.colonne.droite{order:3}
+  .fil{min-height:420px;max-height:420px}
+}
+@media (max-width:520px){body{padding:12px}.horloge .heure{font-size:54px}}
+
+</style>
+</head>
+<body>
+<div class="enveloppe">
+
+  <div class="bandeau">
+    <h1>Console d'animation</h1>
+    <span class="sous">Assistant mobilité dynamique</span>
+    <span class="marque">Jalon 1 · maquettes vivantes</span>
+  </div>
+
+  <div class="onglets" role="tablist">
+    <button role="tab" id="ongOnb" aria-selected="true">Onboarding</button>
+    <button role="tab" id="ongSeq" aria-selected="false">Séquences</button>
+  </div>
+
+  <!-- ================= MODE ONBOARDING ================= -->
+  <div class="grille" id="vueOnb">
+    <div class="colonne gauche">
+      <div class="bloc">
+        <h2>Bras de test</h2>
+        <div id="listeVar"></div>
+      </div>
+      <div class="bloc">
+        <h2>Périmètre collecté (D)</h2>
+        <div id="listePer"></div>
+      </div>
+      <div class="bloc">
+        <h2>Ce que ce bras mesure</h2>
+        <div class="dedans"><p class="note" id="noteVar"></p></div>
+      </div>
+      <div class="bloc">
+        <h2>Participant</h2>
+        <div class="dedans">
+          <input class="ident" id="ident" placeholder="Identifiant (ex. P-04)" autocomplete="off">
+          <button class="bouton creux" id="enregistrer" style="width:100%">Enregistrer la passation</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="colonne centre">
+      <div class="horloge">
+        <div class="heure" id="chrono">0:00</div>
+        <div class="contexte" id="ctxOnb">chronomètre de passation</div>
+      </div>
+      <div class="scene">
+        <div class="tel">
+          <div class="entete">
+            <div class="pastille">T</div>
+            <div>
+              <div class="qui">TADAO Alerte</div>
+              <div class="etat">assistant automatique</div>
+            </div>
+          </div>
+          <div class="fil" id="filOnb"></div>
+          <div class="saisie" id="saisieOnb">
+            <input id="entree" placeholder="Écrivez votre réponse…" autocomplete="off">
+            <button id="envoyer">Envoyer</button>
+          </div>
+        </div>
+        <div class="transport">
+          <button class="bouton" id="lancerOnb">Lancer la passation</button>
+          <button class="bouton creux" id="resetOnb">Réinitialiser</button>
+          <button class="bouton rouge" id="abandonOnb">Marquer un abandon</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="colonne droite">
+      <div class="bloc">
+        <h2>Mesures en direct</h2>
+        <div class="dedans">
+          <div class="mesures">
+            <div class="mesure"><div class="v" id="mTemps">—</div><div class="k">secondes</div></div>
+            <div class="mesure"><div class="v" id="mInter">0</div><div class="k">interactions</div></div>
+            <div class="mesure"><div class="v" id="mBot">0</div><div class="k">msg. assistant</div></div>
+            <div class="mesure"><div class="v" id="mUser">0</div><div class="k">msg. voyageur</div></div>
+          </div>
+          <div class="champ-suivi" id="suiviChamps"></div>
+        </div>
+      </div>
+      <div class="bloc">
+        <h2>Passations</h2>
+        <div class="dedans" id="tablePassations"><p class="vide">Aucune passation enregistrée.</p></div>
+      </div>
+      <div class="bloc">
+        <h2>Coût &amp; sobriété</h2>
+        <div class="dedans">
+          <div class="hyp">
+            <label for="hAb">Abonnés</label><input id="hAb" type="number" value="2000" min="1">
+            <label for="hPe">Perturbations / an</label><input id="hPe" type="number" value="20" min="0">
+            <label for="hTp">€ template (alerte)</label><input id="hTp" type="number" value="0.045" step="0.005" min="0">
+            <label for="hSv">€ message de service</label><input id="hSv" type="number" value="0.010" step="0.005" min="0">
+            <label for="hNp">% alertes non pertinentes</label><input id="hNp" type="number" value="15" min="0" max="100">
+          </div>
+          <div id="tdb"></div>
+          <p class="avert">Tarifs indicatifs à confirmer auprès de votre BSP : ils varient par pays et par catégorie, et la facturation des messages de service change au 1<sup>er</sup> octobre 2026.</p>
+        </div>
+      </div>
+      <div class="bloc">
+        <h2>Débriefing</h2>
+        <div class="dedans">
+          <p class="note">Après le vécu, présentez les trois variantes côte à côte pour la préférence déclarée. Ne faites jamais <strong>vivre</strong> deux bras à la même personne : l'effet d'apprentissage rend les mesures inexploitables.</p>
+          <button class="bouton creux" id="exportOnb" style="width:100%;margin-top:9px">Exporter en CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODE SÉQUENCES ================= -->
+  <div class="grille cache" id="vueSeq">
+    <div class="colonne gauche">
+      <div class="bloc"><h2>Séquence</h2><div id="listeSeq"></div></div>
+      <div class="bloc"><h2>Note de conception</h2><div class="dedans"><p class="note" id="noteSeq"></p></div></div>
+    </div>
+    <div class="colonne centre">
+      <div class="horloge">
+        <div class="heure" id="horloge">—</div>
+        <div class="contexte" id="contexte"></div>
+      </div>
+      <div class="scene">
+        <div class="tel">
+          <div class="entete">
+            <div class="pastille">T</div>
+            <div><div class="qui">TADAO Alerte</div><div class="etat" id="etatTel">assistant automatique</div></div>
+          </div>
+          <div class="fil" id="fil"></div>
+        </div>
+        <div class="transport">
+          <button class="bouton" id="suivant">Message suivant</button>
+          <button class="bouton creux" id="rejouer">Rejouer</button>
+          <button class="bouton creux" id="toutCopier">Tout copier</button>
+          <span class="compteur" id="compteur">0 / 0</span>
+        </div>
+      </div>
+    </div>
+    <div class="colonne droite">
+      <div class="bloc"><h2>Canal</h2><div class="dedans">
+        <div class="choix large" id="canal">
+          <button data-canal="wa" aria-pressed="true">WhatsApp</button>
+          <button data-canal="sms" aria-pressed="false">SMS</button>
+        </div></div>
+      </div>
+      <div class="bloc"><h2>Profil actif</h2><div class="dedans">
+        <p class="note" id="profilActif">Aucun profil collecté. Les séquences utilisent le corridor par défaut.</p>
+      </div></div>
+      <div class="bloc">
+        <h2>Variantes</h2>
+        <div class="dedans">
+          <div class="reglage">
+            <div class="titre">A · Formulation de l'arrivée</div>
+            <div class="glose" id="gloseA"></div>
+            <div class="choix" data-var="A">
+              <button data-val="A1" aria-pressed="false">A1</button>
+              <button data-val="A2" aria-pressed="false">A2</button>
+              <button data-val="A3" aria-pressed="true">A3</button>
+            </div>
+          </div>
+          <div class="reglage">
+            <div class="titre">B · Confirmation intermédiaire</div>
+            <div class="glose" id="gloseB"></div>
+            <div class="choix" data-var="B">
+              <button data-val="B1" aria-pressed="false">B1</button>
+              <button data-val="B2" aria-pressed="false">B2</button>
+              <button data-val="B3" aria-pressed="true">B3</button>
+            </div>
+          </div>
+          <div class="reglage">
+            <div class="titre">C · Niveau de prudence</div>
+            <div class="glose" id="gloseC"></div>
+            <div class="choix" data-var="C">
+              <button data-val="C1" aria-pressed="true">C1</button>
+              <button data-val="C2" aria-pressed="false">C2</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bloc"><h2>Coût du passage en SMS</h2><div class="dedans cout" id="cout"></div></div>
+    </div>
+  </div>
+
+  <div class="pied">
+    <span>← → pour circuler dans les séquences</span>
+    <span>Survolez une bulle pour la copier</span>
+    <span>Rendu volontairement générique : ce n'est pas une reproduction d'interface</span>
+  </div>
+</div>
+
+<script>
+const DONNEES_INLINE = {"corpus": [{"id": "S0", "nom": "Onboarding conversationnel", "contexte": "À l'inscription · hors perturbation", "note": "Crée l'historique de conversation <strong>avant</strong> la crise et pose le contrat du silence. Techniquement, cette séquence constitue l'opt-in et ouvre la fenêtre de service. Le troisième message provoque volontairement une réponse du voyageur.", "blocs": {}, "etapes": [{"c": "in", "t": "18:02", "txt": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique. Je surveille vos lignes et je vous préviens uniquement en cas de perturbation.\n\nLe reste du temps, je reste silencieux : pas de message de ma part = tout va bien."}, {"c": "in", "t": "18:02", "txt": "Voici ce que vous m'avez indiqué :\n\n🚌 Vos lignes : 13 et 1\n📍 Nauticaa (Liévin) → Hôpital (Lens)\n📅 Du lundi au vendredi\n🕐 Départ vers 5h46 · prise de poste 6h30\n\nUne erreur ? Répondez MODIFIER."}, {"c": "in", "t": "18:03", "txt": "Deux commandes à retenir :\n\n⏸ PAUSE — je me tais pendant vos congés\n🛑 STOP — je ne vous écris plus du tout\n\nEnvie de tester ? Écrivez-moi quelque chose, je vous réponds."}]}, {"id": "S1", "nom": "Prévenance J-1", "contexte": "Dimanche 18h27 · travaux annoncés pour lundi", "note": "Le choix final n'est pas une politesse. Le FG2 indique qu'une prévenance la veille <strong>annule</strong> le besoin de plan détaillé. Le taux de réponse « DEMAIN » est un indicateur en soi.", "blocs": {"A": {"A1": "Arrivée estimée à l'Hôpital : 6h21", "A2": "Environ 8 mn de retard sur votre trajet habituel", "A3": "Vous serez à l'Hôpital vers 6h21, soit 8 mn plus tard que d'habitude"}}, "etapes": [{"c": "in", "t": "18:27", "txt": "🔧 TADAO Alerte — travaux demain sur votre ligne\nAssistant automatique TADAO · info du 02/08, 18h27\n\nLa ligne 13 sera déviée demain lundi de 5h00 à 9h00 (travaux rue Hoche, à Liévin).\nLes arrêts Nauticaa quai 3 et Centre Commercial ne seront pas desservis.\n\nPour votre départ de 5h46 :\n{{A}}\n\nJe peux vous préparer une alternative maintenant, ou vous rappeler demain 30 mn avant votre départ.\n\n👉 Répondez MAINTENANT ou DEMAIN"}]}, {"id": "S2", "nom": "Perturbation avant le départ", "contexte": "Lundi 5h18 · départ 5h46 · prise de poste 6h30", "note": "Séquence principale. Corridor et horaires <strong>réels</strong> (NeTEx TADAO). Les deux options partent du même bus et divergent à la correspondance : marcher 140 m et être à l'heure, ou marcher 58 m et arriver en retard. <strong>B se teste en inter-sujets</strong> — un bras par variante.", "blocs": {"A": {"A1": "Arrivée estimée à l'Hôpital : 6h39", "A2": "Environ 26 mn de retard sur votre trajet habituel", "A3": "Vous serez à l'Hôpital vers 6h39, soit 26 mn plus tard que d'habitude"}, "C": {"C1": "Bon trajet. Je vous préviens si la situation change.", "C2": "La situation peut encore évoluer : je vous préviens en cas de changement, et pensez à vérifier l'affichage à l'arrêt."}}, "etapes": [{"c": "in", "t": "05:18", "txt": "⚠️ TADAO Alerte — perturbation sur votre ligne\nAssistant automatique TADAO · mis à jour à 5h16\n\nLa ligne 13 est interrompue entre Liévin Centre et Lens I.U.T (véhicule immobilisé).\nLe prochain passage de 5h46 à Nauticaa est supprimé.\n\nPour votre trajet vers l'Hôpital :\n{{A}}\n\nJe vous trouve une autre solution ?\n👉 Répondez OUI"}, {"c": "out", "t": "05:19", "txt": "OUI"}, {"c": "in", "t": "05:19", "si": {"B": ["B1"]}, "txt": "Très bien. Je récapitule :\n\n📍 Départ : Nauticaa, à Liévin\n🏁 Arrivée : Hôpital, à Lens\n🕕 Vous devez y être pour 6h30\n🚪 Départ prévu vers 5h46\n\nC'est bien cela ?\n👉 OUI / NON"}, {"c": "in", "t": "05:19", "si": {"B": ["B2"]}, "txt": "Vous partez de Nauticaa pour l'Hôpital de Lens, pour 6h30 ?\n\n👉 OUI / NON, autre trajet"}, {"c": "out", "t": "05:20", "si": {"B": ["B1", "B2"]}, "txt": "OUI"}, {"c": "in", "t": "05:20", "txt": "Voici 2 solutions, de la plus rapide à la plus lente :\n\n━━━━━━━━━━━━━━━━━━\n1️⃣  Arrivée 6h21 — vous êtes à l'heure\n🚌 Ligne 1 → Noyelles-Godault, puis ligne 3 → Vendin-le-Vieil\n🔄 1 changement à Bollaert Delelis\n🚶 2 mn de marche\n\n━━━━━━━━━━━━━━━━━━\n2️⃣  Arrivée 6h39 — 9 mn après votre prise de poste\n🚌 Ligne 1 → Noyelles-Godault, puis ligne 41 → Béhal-Jean Zay\n🔄 1 changement à Parc Louvre-Lens\n🚶 1 mn de marche\n\n👉 Répondez 1 ou 2 pour le détail", "sms": "Voici 2 solutions, de la plus rapide a la plus lente :\n\nOPTION 1 - Arrivee 6h21, vous etes a l'heure\nLigne 1 dir. Noyelles-Godault, puis ligne 3 dir. Vendin-le-Vieil\n1 changement a Bollaert Delelis\n2 mn de marche\n\nOPTION 2 - Arrivee 6h39, 9 mn apres votre prise de poste\nLigne 1 dir. Noyelles-Godault, puis ligne 41 dir. Behal-Jean Zay\n1 changement a Parc Louvre-Lens\n1 mn de marche\n\nRepondez 1 ou 2 pour le detail"}, {"c": "out", "t": "05:21", "txt": "1"}, {"c": "in", "t": "05:21", "txt": "Option 1 — partez dans 42 minutes ⏱\n\n🚌 Ligne 1 · direction Noyelles-Godault\n   Nauticaa quai 2 · départ 6h03\n   (suivants : 6h18, 6h33)\n\n🔄 Descendez à Bollaert Delelis · 6h15\n\n🚶 Marchez 2 mn (140 m) jusqu'à Faculté Jean Perrin\n   📍 Itinéraire à pied : [lien]\n\n🚌 Ligne 3 · direction Vendin-le-Vieil\n   Départ 6h19\n\n🏁 Arrivée Hôpital : 6h21\n\nInfo mise à jour à 5h21.\n{{C}}"}]}, {"id": "S3", "nom": "Perturbation en cours de trajet", "contexte": "Lundi 6h07 · le voyageur est déjà parti", "note": "Le cas le plus fréquent en réel, et le plus difficile. Le QCM remplace le partage de position : pour un abonné, les positions probables se déduisent de l'itinéraire déclaré et de l'heure. <strong>C'est ce qui distingue le dispositif d'un trip-planner.</strong>", "blocs": {}, "etapes": [{"c": "in", "t": "06:07", "txt": "⚠️ TADAO Alerte — perturbation en cours\nAssistant automatique TADAO · mis à jour à 6h07\n\nLa ligne 1 est bloquée à hauteur de Bollaert Delelis (accident de circulation).\n\nSi vous êtes à bord ou à l'arrêt, votre arrivée est retardée d'environ 20 mn.\n\nJe vous aide à contourner ?\n👉 Répondez OUI"}, {"c": "out", "t": "06:08", "txt": "OUI"}, {"c": "in", "t": "06:08", "txt": "Où êtes-vous en ce moment ?\n\n1️⃣  Encore à Nauticaa\n2️⃣  Déjà dans le bus de la ligne 1\n3️⃣  Ailleurs — envoyez-moi votre position 📍\n\n👉 Répondez 1, 2 ou 3", "sms": "Ou etes-vous en ce moment ?\n\n1 - Encore a Nauticaa\n2 - Deja dans le bus de la ligne 1\n3 - Ailleurs, ecrivez-moi le nom de l'arret le plus proche\n\nRepondez 1, 2 ou 3", "perte": "Le partage de position n'existe pas en SMS. L'option 3 devient une saisie manuelle."}]}, {"id": "S4", "nom": "Reprise du trafic", "contexte": "Lundi 7h12 · fin d'incident", "note": "Séquence courte, mentionnée par un seul participant. C'est pourtant le <strong>pendant indispensable</strong> du contrat de silence posé à l'inscription : sans elle, le voyageur reste en alerte toute la journée.", "blocs": {}, "etapes": [{"c": "in", "t": "07:12", "txt": "✅ TADAO Alerte — trafic rétabli\nAssistant automatique TADAO · 7h12\n\nLa ligne 13 circule à nouveau normalement entre Liévin Centre et Lens I.U.T.\n\nVotre retour de cet après-midi n'est pas concerné.\nBonne journée."}]}], "onboarding": {"variantes": {"V1": {"id": "V1", "nom": "Conversationnelle", "type": "chat", "resume": "Le bot pose les questions en texte libre. Aucun formulaire. Variante témoin : c'est elle qui mesure le coût réel en messages et le point d'abandon.", "accueil": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique. Je surveille vos lignes et je vous préviens en cas de perturbation.\n\nLe reste du temps je reste silencieux : pas de message de ma part = tout va bien.\n\nPour commencer, quelles lignes prenez-vous habituellement, et à quel moment de la journée ?"}, "V2": {"id": "V2", "nom": "Flow justifié", "type": "flow", "justif": true, "resume": "Formulaire natif dans le fil. Chaque champ est accompagné de son usage. Teste l'hypothèse : la justification réduit-elle l'effet inquisiteur ?", "accueil": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique, au service du réseau TADAO. Je vous préviens en cas de perturbation sur vos lignes — et je reste silencieux le reste du temps.\n\nQuelques questions et c'est réglé."}, "V3": {"id": "V3", "nom": "Flow sec", "type": "flow", "justif": false, "resume": "Mêmes champs, mêmes valeurs par défaut, aucune justification. Le comparateur direct de V2.", "accueil": "Bonjour, ici l'assistant TADAO 👋\n\nJe suis un assistant automatique, au service du réseau TADAO. Je vous préviens en cas de perturbation sur vos lignes — et je reste silencieux le reste du temps.\n\nQuelques questions et c'est réglé."}}, "perimetres": {"D1": {"id": "D1", "nom": "Minimal", "arrets": false, "resume": "Lignes, sens, jours, créneau. Suffit à notifier. En contrepartie, l'assistant devra redemander origine et destination à <strong>chaque</strong> perturbation."}, "D2": {"id": "D2", "nom": "Trajet complet", "arrets": true, "resume": "Ajoute les arrêts de montée et de descente. Onboarding plus long, mais l'assistant n'a plus qu'à confirmer d'un tap — c'est ce qui distingue le dispositif d'un trip-planner."}}, "jours": [{"k": "lun", "l": "L"}, {"k": "mar", "l": "M"}, {"k": "mer", "l": "M"}, {"k": "jeu", "l": "J"}, {"k": "ven", "l": "V"}, {"k": "sam", "l": "S"}, {"k": "dim", "l": "D"}], "creneauxMatin": ["avant 5h30", "5h30 – 6h30", "6h30 – 7h30", "7h30 – 8h30", "8h30 – 9h30", "après 9h30"], "creneauxSoir": ["avant 13h", "13h – 15h", "15h – 17h", "17h – 19h", "19h – 21h", "après 21h"], "relances": {"lignes": "Je n'ai pas identifié de numéro de ligne. Pouvez-vous me donner le ou les numéros ? (par exemple : 1, 13)", "sens": "Est-ce le matin, le soir, ou les deux ?", "creneauM": "Vers quelle heure partez-vous le matin ?", "creneauS": "Et vers quelle heure repartez-vous le soir ?", "montee": "À quel arrêt montez-vous habituellement ?", "descente": "Et à quel arrêt descendez-vous ?"}}, "reseau": {"lignes": [{"n": "1", "c": "b61f21"}, {"n": "3", "c": "ea621c"}, {"n": "5", "c": "306f7b"}, {"n": "11", "c": "2fb6bc"}, {"n": "13", "c": "0099ff"}, {"n": "18", "c": "c64c87"}, {"n": "19", "c": "855d52"}, {"n": "22", "c": "31b196"}, {"n": "25", "c": "c64c87"}, {"n": "31", "c": "94ad24"}, {"n": "33", "c": "94ad24"}, {"n": "35", "c": "8e599f"}, {"n": "37", "c": "31b196"}, {"n": "39", "c": "c43b6a"}, {"n": "41", "c": "7e3275"}, {"n": "55", "c": "7f8c89"}, {"n": "57", "c": "7f8c89"}, {"n": "59", "c": "7f8c89"}, {"n": "91", "c": "000000"}, {"n": "93", "c": "000000"}, {"n": "180", "c": "000000"}], "arrets": {"1": ["10 mars (Fouquières-lès-Lens)", "10 mars (Noyelles-sous-Lens)", "Birembaut (Hénin-Beaumont)", "Birembaut (Montigny-en-Gohelle)", "Bollaert Delelis (Lens)", "Bord des Eaux (Hénin-Beaumont)", "Centre (Liévin)", "Centre-Ville (Lens)", "Cimetière (Sallaumines)", "Cinéma (Hénin-Beaumont)", "Cocorico (Fouquières-lès-Lens)", "Europe (?)", "F. Darchicourt (Hénin-Beaumont)", "Gare (Hénin-Beaumont)", "Gares (Lens)", "Germinal (Noyelles-sous-Lens)", "Germinal (Sallaumines)", "Grands Bureaux (Liévin)", "Guines (Sallaumines)", "Gymnase Hochman (Lens)", "Haute-Ville (Liévin)", "Henri Barbusse (Sallaumines)", "Hôtel de Ville (Sallaumines)", "Jean Jaurès (Liévin)", "Jules Verne (Hénin-Beaumont)", "Laon (Sallaumines)", "Leclerc (Billy-Montigny)", "Les Vaches (Hénin-Beaumont)", "Louvre-Lens (Liévin)", "Lycée Henri Darras (Liévin)", "Lycée Senez (Hénin-Beaumont)", "Léon Delfosse (Billy-Montigny)", "Mairie (Hénin-Beaumont)", "Mitterrand (Montigny-en-Gohelle)", "Nauticaa (Liévin)", "Parc Louvre-Lens (Lens)", "Pont de Douai (Lens)", "Rollencourt (Liévin)", "Rue Oussekine (Billy-Montigny)", "Rue Oussekine (Fouquières-lès-Lens)", "Sainte-Henriette (Hénin-Beaumont)", "Université (Liévin)"], "3": ["Bourel (Avion)", "Béhal-Jean Zay (Lens)", "Centre Dumas (Lens)", "Centre Montgré (Avion)", "Centre-Ville (Lens)", "Cimetière (Avion)", "Faculté Jean Perrin (Lens)", "Gares (Lens)", "Halle Tetelin (Lens)", "Hôpital (Lens)", "Hôtel de Ville (Avion)", "Jeunes de l'arrêt de bus (Avion)", "La Croisette (Loos-en-Gohelle)", "Lebas (Avion)", "Lens (Lens)", "Lens 2 Entrée B (Vendin-le-Vieil)", "Les Renardières (Lens)", "Lucie Aubrac (Lens)", "Lycée Picasso (Avion)", "Parc des Cytises (?)", "Pont de Douai (Lens)", "Pôle Bergson (Lens)", "Rue Helle (Avion)", "Square Foulon (Avion)", "Stade Debeyre (Lens)", "Voltaire (Avion)"], "5": ["Bellevue (Harnes)", "Bertinchamps (Lens)", "Bois d'Epinoy (Libercourt)", "Cantin Salengro (Lens)", "Carembault (Carvin)", "Centre-Ville (Lens)", "Charles Debarge (Harnes)", "Coulée Verte (Harnes)", "Faisanderie (Libercourt)", "Gare (Libercourt)", "Gare (Loison-sous-Lens)", "Gares (Lens)", "Grand Moulin (Harnes)", "LOISON-SOUS-LENS- Les Oiseaux (?)", "Les Oiseaux (?)", "Les Saules (Harnes)", "Mairie (Carvin)", "Mairie (Harnes)", "Mairie (Loison-sous-Lens)", "Médiathèque (Carvin)", "Notre Dame (Carvin)", "Plantigeons (Carvin)", "Pont de Grès (Carvin)", "Renoir (Loison-sous-Lens)", "Route de Lille (Harnes)", "Rue Léon Duhamel (Harnes)", "Rue des Fusillés (Harnes)", "Rue des HGD (Loison-sous-Lens)", "Rémy Callot (Carvin)", "Saint-Druon (Carvin)", "Saint-Paul (Carvin)", "Square Quinet (Carvin)", "Stade Léo Lagrange (Lens)", "Tribunal D'Instance (Lens)", "Valmy (Harnes)"], "11": ["A.F.P.A. (Liévin)", "Alouettes (Bully-les-Mines)", "Bailleux (Mazingarbe)", "Bd Mendès France (Éleu-dit-Leauwette)", "Bellevue (Éleu-dit-Leauwette)", "Berlioz (Grenay)", "Casimir Beugnet (Bully-les-Mines)", "Centre Administratif (Liévin)", "Centre Cial (Noyelles-lès-Vermelles)", "Centre Commercial (Liévin)", "Cimetière (Grenay)", "Cité (Mazingarbe)", "Cité des brebis (Bully-les-Mines)", "Clinique (Liévin)", "Collège Anita Conti (Bully-les-Mines)", "De Gaulle (Bully-les-Mines)", "Décatoire (Mazingarbe)", "Espérance (Liévin)", "Flandres (Grenay)", "Fosse (Lens)", "Gare (Grenay)", "Gares (Lens)", "Grands Bureaux (Liévin)", "Guadeloupe (Grenay)", "Hugo (Bully-les-Mines)", "Jean Jaurès (Mazingarbe)", "La Plaine (Grenay)", "Lamendin (Mazingarbe)", "Les Cornailles (Liévin)", "Lorraine (Bully-les-Mines)", "Lycée Hennebique (Liévin)", "Magenta (Mazingarbe)", "Mairie (Bully-les-Mines)", "Mairie (Grenay)", "Mairie (Éleu-dit-Leauwette)", "Mendès France (Liévin)", "Octroi (Liévin)", "Offenbach (Bully-les-Mines)", "P.A Alouette (Liévin)", "Philosophe (Vermelles)", "Picardie (Loos-en-Gohelle)", "Riaumont (Liévin)", "Rue Blériot (Éleu-dit-Leauwette)", "Salle Carpentier (Liévin)", "Stade Duflot (Liévin)", "Targette (Grenay)", "Tonkin (Grenay)", "Verbrugge (Grenay)", "Védrines (Grenay)", "Waldeck-Rousseau (Liévin)", "Yser (Mazingarbe)", "Z.A de Leauwette (Éleu-dit-Leauwette)", "Z.A.L Minopole (Bully-les-Mines)", "ZAC du Gard (Lens)", "ZAC du Gard (Éleu-dit-Leauwette)"], "13": ["Allende (Liévin)", "Alsace (Liévin)", "André Boulloche (Lens)", "Bibliothèque (Lens)", "Blanqui (Liévin)", "Caumont (?)", "Cavée (Angres)", "Centre (Liévin)", "Centre Commercial (Liévin)", "Centre-Ville (Lens)", "Cité des Provinces (Loos-en-Gohelle)", "Clemenceau (Angres)", "Cyclamens (Lens)", "Descartes (Liévin)", "Gares (Lens)", "Hirsons (Liévin)", "I.U.T (Lens)", "Lampin (Liévin)", "Leclerc (Angres)", "Lyonnais (Lens)", "Mairie (Angres)", "Mendès France (Liévin)", "Montcalm (Liévin)", "Nauticaa (Liévin)", "Néruda (Liévin)", "Picardie (Lens)", "Place du Quercy (Lens)", "Primevères (Lens)", "Site du 11/19 (Liévin)", "Tamaris (Liévin)", "Tilleuls (Liévin)", "Van Pelt (Lens)", "Vent de Bise (Liévin)", "illets (Lens)"], "18": ["Actigreen (Barlin)", "André Boulloche (Lens)", "Artisanat (Lens)", "Bailleux (Barlin)", "Bailleux (Mazingarbe)", "Beugnet (Grenay)", "Bibliothèque (Lens)", "Bourbonnais (Bruay-la-Buissière)", "Cap Vert (Bruay-la-Buissière)", "Casimir Beugnet (Bully-les-Mines)", "Caullet (Loos-en-Gohelle)", "Champagne (Bruay-la-Buissière)", "Champs d'Argent (Hersin-Coupigny)", "Cimetière (Loos-en-Gohelle)", "Cimetière (Ruitz)", "Cité des brebis (Bully-les-Mines)", "Collège Moulin (Barlin)", "Dutouquet (Mazingarbe)", "Ecole Lamendin (Loos-en-Gohelle)", "Eglise (Maisnil-lès-Ruitz)", "Eglise du (Haillicourt)", "Europe (Bruay-la-Buissière)", "Fosse (Barlin)", "Fosse (Haillicourt)", "Fresnicourt (Barlin)", "Gare (Grenay)", "Gares (?)", "Gares (Lens)", "Grand Mont (Loos-en-Gohelle)", "Hayette (Hersin-Coupigny)", "Hermaville (Sains-en-Gohelle)", "Hugo (Bully-les-Mines)", "Hôtel de Ville (Sains-en-Gohelle)", "IUT Nord (Lens)", "La Croisée (?)", "Lamartine (Mazingarbe)", "Les Hayes (Ruitz)", "Liberté (Sains-en-Gohelle)", "Longue Pierre (Hersin-Coupigny)", "Magenta (Mazingarbe)", "Mairie (Barlin)", "Mairie (Haillicourt)", "Mairie (Hersin-Coupigny)", "Mairie (Loos-en-Gohelle)", "Mairie (Maisnil-lès-Ruitz)", "Mairie (Mazingarbe)", "Mairie (Ruitz)", "Marcel Wacheux (Barlin)", "Marina (Barlin)", "Mirabeau (Loos-en-Gohelle)", "Piscine (Hersin-Coupigny)", "Place Verte (Maisnil-lès-Ruitz)", "Plumecoq (Lens)", "Racine (Sains-en-Gohelle)", "Rue Emile Basly (Hersin-Coupigny)", "Résistance (Sains-en-Gohelle)", "Saint-Ouen (Grenay)", "Saint-Pierre (Grenay)", "Supervielle (Loos-en-Gohelle)", "Verbrugge (Grenay)", "Vigny (Sains-en-Gohelle)", "Village (Ruitz)", "Z.A.L Minopole (Bully-les-Mines)", "ZI Ouest (Ruitz)", "Zola (Haillicourt)"], "19": ["10 Mars (Méricourt)", "10 mars (Méricourt)", "Acacias (Noyelles-Godault)", "Albert Schweitzer (Hénin-Beaumont)", "Barbusse (Rouvroy)", "Barbès (Méricourt)", "Base de Loisirs (Hénin-Beaumont)", "Bernard Omer (Rouvroy)", "Bourel (Avion)", "Briquet (Courcelles-lès-Lens)", "Centre Montgré (Avion)", "Centre-Ville (Lens)", "Chemin des Lapins (Méricourt)", "Cheminots (Avion)", "Château d'Eau (Courcelles-lès-Lens)", "Cimetière (Courcelles-lès-Lens)", "Cimetière (Méricourt)", "Cité Rogliano (Courcelles-lès-Lens)", "Collège Macé (Hénin-Beaumont)", "Delegorgue (Courcelles-lès-Lens)", "Droits des Enfants (Méricourt)", "Ecoquartier (Méricourt)", "Europe (?)", "Flöha (Méricourt)", "Fosse (Rouvroy)", "Gare (Hénin-Beaumont)", "Gares (Lens)", "Girondins (Hénin-Beaumont)", "Henri Hotte (Méricourt)", "Hôtel de ville (Méricourt)", "Italiens (Rouvroy)", "La Canche (Rouvroy)", "La Chenaie Nord (Rouvroy)", "La Perche (Hénin-Beaumont)", "Laly (Rouvroy)", "Le Parc (Méricourt)", "Les Rivières (Hénin-Beaumont)", "Leterme (Hénin-Beaumont)", "Mairie (Courcelles-lès-Lens)", "Max Pol Fouchet (Méricourt)", "Michelet (Hénin-Beaumont)", "P.A du Quiéry (Noyelles-Godault)", "Parc des Iles (Hénin-Beaumont)", "Parc des Iles (Rouvroy)", "Parc à bois (Noyelles-Godault)", "Place Blanchant (Rouvroy)", "Place Tamboise (Rouvroy)", "Pont de Douai (Lens)", "Poste (Rouvroy)", "Rimbaud (Hénin-Beaumont)", "Rivage (Noyelles-Godault)", "Robiaud (Hénin-Beaumont)", "Rue de Fismes (Courcelles-lès-Lens)", "Rufisque (Hénin-Beaumont)", "Saint-Henri (Hénin-Beaumont)", "Salingue (Avion)", "Sulliger (Méricourt)", "Talman (Noyelles-Godault)", "Taverne (Avion)", "Thorez (Noyelles-Godault)", "Van der Meerch (Rouvroy)", "Voltaire (Avion)", "Wakefield (Hénin-Beaumont)", "ZA (Courcelles-lès-Lens)"], "22": ["Ampère (Beuvry)", "André Boulloche (Lens)", "Artisanat (Lens)", "Ballon (Beuvry)", "Bibliothèque (Lens)", "Calvaire (Beuvry)", "Cimetière (Vermelles)", "Cité (Annequin)", "Cité (Mazingarbe)", "Cité Cheminots (Béthune)", "Clemenceau (Béthune)", "Ecole Prévert (Beuvry)", "Epinette (Noyelles-lès-Vermelles)", "Frères Robert (Beuvry)", "Gambetta (Vermelles)", "Gare (Béthune)", "Gares (Lens)", "Gauthier (Béthune)", "Gerbes d'Or (Sailly-Labourse)", "Grand Mont (Loos-en-Gohelle)", "Hôpital (Beuvry)", "IUT Nord (Lens)", "Jouhaux (Vermelles)", "La Guerre (Loos-en-Gohelle)", "Le Clos du Bois (Noyelles-lès-Vermelles)", "Legillon (Béthune)", "Les Près (Sailly-Labourse)", "Lycée Malraux (Béthune)", "Mairie (Noyelles-lès-Vermelles)", "Mairie (Sailly-Labourse)", "Mairie (Vermelles)", "Monbon (Sailly-Labourse)", "Montpellier (Vermelles)", "Palais des Sports (Béthune)", "Parc du Perroy (Béthune)", "Plumecoq (Lens)", "Saint-Lô (Mazingarbe)", "Saint-Lô (Vermelles)", "Socrate (Vermelles)", "Université (Verquigneul)"], "25": ["10 mars (Fouquières-lès-Lens)", "10 mars (Noyelles-sous-Lens)", "Ampère (Noyelles-sous-Lens)", "Bourganeuf (Noyelles-sous-Lens)", "Capelle (Hénin-Beaumont)", "Collège Wallon (Méricourt)", "Courtaigne (Noyelles-sous-Lens)", "Delory (Hénin-Beaumont)", "Etienne Dolet (Sallaumines)", "Fosse (Billy-Montigny)", "Gambetta (Noyelles-sous-Lens)", "Gare (Billy-Montigny)", "Gendarmerie (Rouvroy)", "Germinal (Noyelles-sous-Lens)", "Germinal (Sallaumines)", "Girondins (Hénin-Beaumont)", "Gérard Philippe (Sallaumines)", "Henri Barbusse (Sallaumines)", "Jean Moulin (Billy-Montigny)", "Jiolat (Sallaumines)", "La Chenaie Sud (Rouvroy)", "La Parisienne (Drocourt)", "La Perche (Hénin-Beaumont)", "Langevin (Billy-Montigny)", "Le Corbusier (Billy-Montigny)", "Leclerc (Billy-Montigny)", "Lorraine (Noyelles-sous-Lens)", "Mairie (Billy-Montigny)", "Mairie (Drocourt)", "Mairie (Hénin-Beaumont)", "Mairie (Noyelles-sous-Lens)", "Mairie (Rouvroy)", "Michelet (Hénin-Beaumont)", "Muid (Sallaumines)", "Palma (Drocourt)", "Pierrard (Méricourt)", "Place Tamboise (Rouvroy)", "Polyclinique (Hénin-Beaumont)", "Poste (Noyelles-sous-Lens)", "Poste (Rouvroy)", "Roussillon (Drocourt)", "Route d'Arras (Drocourt)", "Rue du 14 Juillet (Noyelles-sous-Lens)", "Saint-Exupéry (Méricourt)", "Saint-Henri (Hénin-Beaumont)", "Salle des Fêtes (Rouvroy)", "Simon (Méricourt)", "Touquet (Sallaumines)", "Van Pelt (Lens)", "Willy Brandt (Hénin-Beaumont)", "Z.A.E Averlans (Noyelles-sous-Lens)"], "31": ["Accordéonneux (Loos-en-Gohelle)", "Alsace (Liévin)", "Baras (Liévin)", "Blum (Liévin)", "Centre Administratif (Liévin)", "Centre Commercial (Liévin)", "Chouard (Liévin)", "Cimetière Nord (Liévin)", "Cimetière Sud (Liévin)", "Citoyenneté (Liévin)", "Clinique (Liévin)", "Convention (Liévin)", "Descartes (Liévin)", "Espérance (Liévin)", "Fond d'Anglet (Liévin)", "Four à Chaux (Liévin)", "Garennes (Liévin)", "Grands Bureaux (Liévin)", "Henri Martin (Liévin)", "IME (Liévin)", "Les Cornailles (Liévin)", "Les Fougères (Liévin)", "Liberté (Liévin)", "Louis Pasteur (Liévin)", "Louvre-Lens (Liévin)", "Lycée Hennebique (Liévin)", "Lycée Henri Darras (Liévin)", "Margelle (Liévin)", "Marionnettes (Liévin)", "Mendès France (Liévin)", "Moulinage (Liévin)", "Mousseron (Liévin)", "Nauticaa (Liévin)", "Place Gambetta (Liévin)", "Rue Piette (Liévin)", "Rue Thiers (Liévin)", "Saint-Albert (Liévin)", "Salle Carpentier (Liévin)", "Simon (Liévin)", "Site du 11/19 (Liévin)", "Stade Duflot (Liévin)", "Waldeck-Rousseau (Liévin)"], "33": ["4 septembre (Lens)", "Athènes (Harnes)", "Avenue Darchicourt (Oignies)", "Avenue des Sports (Oignies)", "Azalées (Loison-sous-Lens)", "Barbusse (Harnes)", "Basly (Oignies)", "Bois-Rigault (?)", "Béhal-Jean Zay (Lens)", "Cantin Salengro (Lens)", "Centre Commercial (Vendin-le-Vieil)", "Centre Culturel (Courrières)", "Charcot (Lens)", "Chinon (Courrières)", "Château Salins (Harnes)", "Cité des Têtes (Oignies)", "Collège Hugo (Harnes)", "Crombez (Oignies)", "Curie (Courrières)", "Delattre (Lens)", "Desrousseaux (Vendin-le-Vieil)", "Espace Mimoun (Harnes)", "Eugène Thomas (Lens)", "Gare (Libercourt)", "Gare (Loison-sous-Lens)", "Garguetelles (Libercourt)", "Grand Moulin (Harnes)", "Grison (Vendin-le-Vieil)", "Hôpital (Lens)", "Jaurès (Oignies)", "Jean Moulin (Lens)", "La Croisette (Loos-en-Gohelle)", "La Fontaine (Lens)", "La Poste (Oignies)", "Lamartine (Courrières)", "Lens 2 Entrée B (Vendin-le-Vieil)", "Mairie (Harnes)", "Mairie (Loison-sous-Lens)", "Mairie (Vendin-le-Vieil)", "Manot (Vendin-le-Vieil)", "Mollet (Lens)", "Parc des Cytises (?)", "Petit Moulin (Oignies)", "Rotois (Courrières)", "Route d'Harnes (Courrières)", "Rue Jean Jaurès (Courrières)", "Rue Léon Duhamel (Harnes)", "Salengro (Vendin-le-Vieil)", "Schaffner (Lens)", "Sembat (Oignies)", "Serroën (Loison-sous-Lens)", "Six-Drèves (Libercourt)", "Stade Léo Lagrange (Lens)", "Trait d'Union (Vendin-le-Vieil)", "Vaillant (Vendin-le-Vieil)", "Valmy (Harnes)", "Verdun (Harnes)"], "35": ["Bd Mendès France (Éleu-dit-Leauwette)", "Briquet (Auchy-les-Mines)", "Brossolette (Avion)", "Cadras (Avion)", "Centre Commercial (Vendin-le-Vieil)", "Château d'Eau (Auchy-les-Mines)", "Château d'Eau (Haisnes)", "Cimetière (Hulluch)", "Cimetière Nord (Lens)", "Delestraint (Avion)", "Delestraint (Éleu-dit-Leauwette)", "Eglise (Avion)", "Faculté Jean Perrin (Lens)", "Fosse (Hulluch)", "Fosse (Lens)", "Gambetta (Loos-en-Gohelle)", "Gare (Avion)", "Gare (La Bassée)", "Gares (?)", "Gendarmerie (Avion)", "Ghesquière (Avion)", "Humblot (Auchy-les-Mines)", "Hôpital (Lens)", "Hôtel de Ville (Avion)", "Jeu de Balle (Lens)", "La Fontaine (Lens)", "La Poste (Haisnes)", "Lannes (Loos-en-Gohelle)", "Lebas (Avion)", "Lens 2 Entrée B (Vendin-le-Vieil)", "Mairie (Auchy-les-Mines)", "Mairie (Haisnes)", "Mairie (Hulluch)", "Mairie (Loos-en-Gohelle)", "Mairie (Éleu-dit-Leauwette)", "Maraîchon (Hulluch)", "Martel (Avion)", "Maurice Ravel (Loos-en-Gohelle)", "Mirabeau (Loos-en-Gohelle)", "Palissy (Loos-en-Gohelle)", "Parc des Cytises (?)", "Planquette (Auchy-les-Mines)", "Pont De la Bassée (Douvrin)", "René Cassin (Loos-en-Gohelle)", "Rousseau (Avion)", "Roussel (Loos-en-Gohelle)", "Route de Lens (Haisnes)", "Rue Salengro (Haisnes)", "Rue du 08 Mai (Haisnes)", "Saint-Edouard (Lens)", "Saint-Elie (Hulluch)", "Sainte Elisabeth (Auchy-les-Mines)", "Salle Houdart (Lens)", "Square Foulon (Avion)", "Thumerelle (Avion)", "Tournebride (Hulluch)", "Vasco de Gama (Loos-en-Gohelle)", "ZAC du Gard (Lens)", "ZAC du Gard (Éleu-dit-Leauwette)"], "37": ["4 septembre (Lens)", "Briquet (Lens)", "Buisine (Wingles)", "Béhal-Jean Zay (Lens)", "CCAS (Vendin-le-Vieil)", "Carrefour Eloi (Douvrin)", "Cavaliers (Douvrin)", "Centre Commercial (Auchy-les-Mines)", "Centre Dumas (Lens)", "Chapelle (Billy-Berclau)", "Cité Boulanger (Billy-Berclau)", "Cité Dejong (Douvrin)", "Cité du Maroc (Douvrin)", "Condorcet (Lens)", "Cornet (Wingles)", "Desrousseaux (Vendin-le-Vieil)", "EHPAD (Vendin-le-Vieil)", "Ecole Maternelle (Billy-Berclau)", "Eglise (Billy-Berclau)", "Faculté Jean Perrin (Lens)", "Flandres (?)", "Fosse (Billy-Berclau)", "Gare (Haisnes)", "Halle Tetelin (Lens)", "Hôpital (Lens)", "Hôtel de Ville (La Bassée)", "Jacobins (Douvrin)", "Leclerc (Wingles)", "Lucie Aubrac (Lens)", "Mairie (?)", "Mairie (Bauvin)", "Mairie (Billy-Berclau)", "Mairie (Douvrin)", "Mairie (Meurchin)", "Mairie (Vendin-le-Vieil)", "Mairie (Wingles)", "Marais (Bauvin)", "Onze Novembre (Billy-Berclau)", "Ormeaux (Meurchin)", "Parc Cabiddu (Wingles)", "Pasteur (Billy-Berclau)", "Place Thomas (Douvrin)", "Pont De la Bassée (Douvrin)", "Pont de l'Abbaye (Vendin-le-Vieil)", "Pré de Pâques (Douvrin)", "Rue André Pezé (Wingles)", "Rue de Guérous (Douvrin)", "République (Vendin-le-Vieil)", "Saint-Auguste (Loison-sous-Lens)", "Saint-Auguste (Vendin-le-Vieil)", "Salengro (Vendin-le-Vieil)", "Schaffner (Lens)", "Thomas (Meurchin)", "Torjois (Wingles)", "Vaillant (Vendin-le-Vieil)"], "39": ["4 septembre (Lens)", "Apollinaire (Carvin)", "Aragon (Carvin)", "Azalées (Loison-sous-Lens)", "Berlioz (Carvin)", "Béhal-Jean Zay (Lens)", "Cantin Salengro (Lens)", "Centre Commercial (Loison-sous-Lens)", "Charcot (Lens)", "Cité Saint-Jean (?)", "Cité Saint-Jean (Carvin)", "Collège Rousseau (Carvin)", "Concurrence (Annay)", "De Gaulle (Pont-à-Vendin)", "Delattre (Lens)", "Ecussons (Carvin)", "Eglise (Carvin)", "Eugène Thomas (Lens)", "Gare (Loison-sous-Lens)", "Gare (Pont-à-Vendin)", "Jean Moulin (Lens)", "Lycée Diderot (Carvin)", "Mairie (Annay)", "Mairie (Estevelles)", "Mairie (Pont-à-Vendin)", "Marais d'Annay (Annay)", "Mollet (Lens)", "Monument (Estevelles)", "Nonettes (Carvin)", "Notre Dame (Carvin)", "Oloron (Carvin)", "Oran (Carvin)", "Pont de Grès (Carvin)", "Robespierre (Carvin)", "Ronchois (Carvin)", "Rue Mattei (Annay)", "Saint-Druon (Carvin)", "Saint-Paul (Carvin)", "Schaffner (Lens)", "Serroën (Loison-sous-Lens)", "Stade Léo Lagrange (Lens)", "Zola (Carvin)"], "41": ["Blum (Lens)", "Bourdonnais (Lens)", "Briquet (Lens)", "Béhal-Jean Zay (Lens)", "Centre des Impôts (Lens)", "Centre-Ville (Lens)", "Cimetière Ouest (Lens)", "Condorcet (Lens)", "Coty (Lens)", "Cyclamens (Lens)", "Desrousseaux (Lens)", "Gares (Lens)", "Grand Condé (Lens)", "Halle Tetelin (Lens)", "Hôpital Ouest (Lens)", "I.U.T (Lens)", "Londres (Lens)", "Lorette (Lens)", "Louvre-Lens (Lens)", "Lucie Aubrac (Lens)", "Parc Louvre-Lens (Lens)", "Primevères (Lens)", "Robespierre (Lens)", "Schaffner (Lens)", "Sellier (Éleu-dit-Leauwette)", "Sécurité Sociale (Lens)", "Van Pelt (Lens)", "Vivien Foe (Lens)", "illets (Lens)"], "55": ["Arles (Sains-en-Gohelle)", "Carcassonne (Sains-en-Gohelle)", "Centre (Aix-Noulette)", "Centre Commercial (Liévin)", "Cimetière (Aix-Noulette)", "Citoyenneté (Liévin)", "Collège Anita Conti (Bully-les-Mines)", "De Gaulle (Bully-les-Mines)", "Ecole Bruyères (Aix-Noulette)", "Epinette (Aix-Noulette)", "Gare (Grenay)", "Hugo (Bully-les-Mines)", "Jaurès (Bully-les-Mines)", "Lantoine (Aix-Noulette)", "Lucheux (Bouvigny-Boyeffles)", "Mairie (Bouvigny-Boyeffles)", "Mairie (Bully-les-Mines)", "Mayeur (Bouvigny-Boyeffles)", "Nauticaa (Liévin)", "Noulette (Aix-Noulette)", "Reims (Sains-en-Gohelle)", "Rue de Bouvigny (Aix-Noulette)", "Rue du Bois (Aix-Noulette)", "Sagnol (Bully-les-Mines)", "Salengro (Bouvigny-Boyeffles)", "Z.A.L Minopole (Bully-les-Mines)"], "57": ["Boutzeur (Ablain-Saint-Nazaire)", "Brossolette (Souchez)", "Centre Commercial (Liévin)", "Citoyenneté (Liévin)", "Cité Camus (?)", "Descartes (Liévin)", "Jaurès (Souchez)", "Mairie (Ablain-Saint-Nazaire)", "Mairie (Angres)", "Maisonneraie (Angres)", "Monument (Angres)", "Namur (Ablain-Saint-Nazaire)", "Nauticaa (Liévin)", "Salengro (Liévin)", "Vieille Eglise (Ablain-Saint-Nazaire)"], "59": ["Bd Mendès France (Éleu-dit-Leauwette)", "Bergaigne (Vimy)", "Eglise (Vimy)", "Fosse (Lens)", "Gambetta (Vimy)", "Gares (?)", "Ghesquière (Avion)", "Jeanne d'Arc (Vimy)", "Mairie (Vimy)", "Martel (Avion)", "Mésanges (Vimy)", "Peupliers (Vimy)", "Pinchonvalles (Avion)", "ZAC du Gard (Lens)", "ZAC du Gard (Éleu-dit-Leauwette)"], "91": ["André Boulloche (Lens)", "Artisanat (Lens)", "Cantin Salengro (Lens)", "Centre des Impôts (Lens)", "Cimetière Nord (Lens)", "Cité des Oiseaux (Lens)", "Coty (Lens)", "Desrousseaux (Lens)", "Grand Condé (Lens)", "IUT Nord (Lens)", "Jeu de Balle (Lens)", "La Fontaine (Lens)", "Lorette (Lens)", "Mozart (Lens)", "Saint-Edouard (Lens)", "Salle Houdart (Lens)", "Sellier (Éleu-dit-Leauwette)", "Tribunal D'Instance (Lens)"], "93": ["Cité Camus (?)", "Clemenceau (Angres)", "Dorés Musis (Carency)", "Dégréaux (Givenchy-en-Gohelle)", "Gambetta (Carency)", "Gare (Vimy)", "Jaurès (Souchez)", "Mairie (Angres)", "Mairie (Carency)", "Mairie (Souchez)", "Mairie (Villers-au-Bois)", "Mairie (Vimy)", "Maisonneraie (Angres)", "Morel (Souchez)", "Pasteur (Carency)", "Peupliers (Vimy)", "Route de Lens (Villers-au-Bois)", "Transvaal (Angres)"], "180": ["Ancienne Gare (Bruay-la-Buissière)", "André Boulloche (Lens)", "Artisanat (Lens)", "Bibliothèque (Lens)", "Bourbonnais (Bruay-la-Buissière)", "Champagne (Bruay-la-Buissière)", "Charles Pecqueur (Ruitz)", "Europe (Bruay-la-Buissière)", "Gares (Lens)", "Grand Mont (Loos-en-Gohelle)", "IUT Nord (Lens)", "Mairie (Haillicourt)", "Plumecoq (Lens)", "ZI Ouest (Ruitz)"]}}, "tarifs": {"hypotheses": {"abonnes": 2000, "perturbationsParAn": 20, "prixTemplate": 0.045, "prixService": 0.01, "tauxNonPertinent": 15}, "trafic": {"D1": {"template": 1, "service": 6, "octets": 2600, "note": "alerte + 3 aller-retours de qualification"}, "D2": {"template": 1, "service": 3, "octets": 1500, "note": "alerte + confirmation + itinéraire"}}, "onboardingReference": {"V1": {"template": 1, "service": 7}, "V2": {"template": 1, "service": 2}, "V3": {"template": 1, "service": 2}}, "gloses": {"A": {"A1": "Horaire absolu, sans référence à l'habitude.", "A2": "Écart relatif au trajet habituel.", "A3": "Horaire absolu + écart, avec réassurance implicite."}, "B": {"B1": "Récapitulatif en quatre lignes.", "B2": "Une question fermée, un tap.", "B3": "Aucune confirmation, on va droit aux alternatives."}, "C": {"C1": "L'assistant annonce, sans réserve.", "C2": "L'assistant signale que la situation peut évoluer."}}}};
+/* ============================================================
+   DONNÉES — chargement des fichiers data/*.json
+   ------------------------------------------------------------
+   Les textes éditoriaux et les données réseau ne vivent JAMAIS
+   dans le code. Ce fichier est le seul point de contact.
+   ============================================================ */
+
+let LIGNES, JOURS, CRENEAUX_M, CRENEAUX_S, VARIANTES, PERIMETRES,
+    RELANCES, ARRETS, CORPUS, TARIFS, TRAFIC, GLOSES;
+
+async function chargerDonnees(){
+  const lire = async f => {
+    return DONNEES_INLINE[f.replace(".json","")];
+  };
+
+  const [corpus, onb, reseau, tarifs] = await Promise.all([
+    lire("corpus.json"), lire("onboarding.json"),
+    lire("reseau.json"), lire("tarifs.json")
+  ]);
+
+  CORPUS     = corpus;
+  VARIANTES  = onb.variantes;
+  PERIMETRES = onb.perimetres;
+  JOURS      = onb.jours;
+  CRENEAUX_M = onb.creneauxMatin;
+  CRENEAUX_S = onb.creneauxSoir;
+  RELANCES   = onb.relances;
+  LIGNES     = reseau.lignes;
+  ARRETS     = reseau.arrets;
+  TARIFS     = tarifs;
+  TRAFIC     = tarifs.trafic;
+  GLOSES     = tarifs.gloses;
+
+  return {corpus, onb, reseau, tarifs};
+}
+
+/* Valeurs par défaut du tableau de bord, injectées dans le formulaire */
+function appliquerHypotheses(){
+  const h = TARIFS.hypotheses;
+  const set = (id, v) => { const el = document.querySelector(id); if(el) el.value = v; };
+  set("#hAb", h.abonnes);
+  set("#hPe", h.perturbationsParAn);
+  set("#hTp", h.prixTemplate);
+  set("#hSv", h.prixService);
+  set("#hNp", h.tauxNonPertinent);
+}
+
+/* ============================================================
+   ONBOARDING — état de passation et logique métier
+   Constantes fournies par js/donnees.js (data/*.json).
+   Aucun accès au DOM ici : ce fichier est testable isolément.
+   ============================================================ */
+
+/* ---------- état de passation ---------- */
+let ONB = null;
+
+function profilVide(){
+  return { lignes:[], sens:null, jours:["lun","mar","mer","jeu","ven"],
+           creneauM:null, creneauS:null, montee:null, descente:null,
+           retourDifferent:false, monteeR:null, descenteR:null };
+}
+
+function onbInit(variante, perimetre){
+  ONB = { variante, perimetre, profil:profilVide(),
+    t0:null, tFin:null, interactions:0, msgBot:0, msgUser:0,
+    corrections:0, relances:0, fil:[], termine:false, abandon:false, flowEnvoye:false };
+}
+function onbChrono(){ return ONB && ONB.t0 ? Math.round(((ONB.tFin || Date.now()) - ONB.t0)/1000) : 0; }
+function onbTop(){ if(ONB && !ONB.t0) ONB.t0 = Date.now(); }
+function pousse(qui, txt){
+  ONB.fil.push({qui, txt});
+  if(qui === "in") ONB.msgBot++; else ONB.msgUser++;
+}
+
+function arretsDispo(lignes){
+  const s = new Set();
+  lignes.forEach(l => (ARRETS[l] || []).forEach(a => s.add(a)));
+  return [...s].sort();
+}
+
+/* ---------- V1 : extraction déterministe (volontairement sans LLM) ---------- */
+function extrait(txt, p, perimetre){
+  const t = txt.toLowerCase();
+
+  (t.match(/\b\d{1,3}\b/g) || [])
+    .filter(n => LIGNES.some(l => l.n === n))
+    .forEach(n => { if(!p.lignes.includes(n)) p.lignes.push(n); });
+
+  /* CORRECTIF : « les deux », « aller-retour », « matin et soir » */
+  const lesDeux = /les deux|tous les deux|aller.?retour|matin et soir|soir et matin|^deux$/.test(t.trim());
+  const matin = /matin|aller|le boulot|au travail|prise de poste/.test(t);
+  const soir  = /soir|retour|rentr|apr[èe]s.?midi/.test(t);
+  if(lesDeux || (matin && soir)) p.sens = "les-deux";
+  else if(matin) p.sens = "matin";
+  else if(soir)  p.sens = "soir";
+
+  if(/semaine|lundi au vendredi|lun.*ven|jours ouvr/.test(t))
+    p.jours = ["lun","mar","mer","jeu","ven"];
+  if(/tous les jours|7j|week.?end/.test(t))
+    p.jours = JOURS.map(j=>j.k);
+
+  const h = t.match(/(\d{1,2})\s*[h:](\d{2})?/);
+  if(h){
+    const hh = parseInt(h[1],10) + (h[2] ? parseInt(h[2],10)/60 : 0);
+    const matinal = hh < 12;
+    const tbl = matinal ? CRENEAUX_M : CRENEAUX_S;
+    const seuils = matinal ? [5.5,6.5,7.5,8.5,9.5] : [13,15,17,19,21];
+    let i = seuils.findIndex(s => hh < s);
+    p[matinal ? "creneauM" : "creneauS"] = tbl[i < 0 ? tbl.length-1 : i];
+  }
+
+  if(perimetre === "D2"){
+    arretsDispo(p.lignes).forEach(a=>{
+      const nom = a.split(" (")[0].toLowerCase();
+      if(nom.length > 3 && t.includes(nom)){
+        if(!p.montee) p.montee = a;
+        else if(!p.descente && p.montee !== a) p.descente = a;
+      }
+    });
+  }
+  return p;
+}
+
+function manque(p, perimetre){
+  const m = [];
+  if(!p.lignes.length) m.push("lignes");
+  if(!p.sens) m.push("sens");
+  if(p.sens && p.sens !== "soir" && !p.creneauM) m.push("creneauM");
+  if(p.sens === "soir" && !p.creneauS) m.push("creneauS");
+  if(p.sens === "les-deux" && !p.creneauS) m.push("creneauS");
+  if(perimetre === "D2"){
+    if(!p.montee) m.push("montee");
+    if(!p.descente) m.push("descente");
+  }
+  return m;
+}
+
+/* Les libellés de relance sont dans data/onboarding.json (clé "relances"). */
+
+
+function libelleSens(s){
+  return {matin:"Le matin", soir:"Le soir", "les-deux":"Matin et soir"}[s] || "—";
+}
+
+/* ============================================================
+   CONSOLE — rendu et interactions (onboarding + séquences)
+   Dépend de : js/donnees.js, js/onboarding.js
+   ============================================================ */
+
+const $ = s=>document.querySelector(s);
+const esc = s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+/* ==================== ONGLETS ==================== */
+function mode(m){
+  const onb = m==="onb";
+  $("#ongOnb").setAttribute("aria-selected", onb);
+  $("#ongSeq").setAttribute("aria-selected", !onb);
+  $("#vueOnb").classList.toggle("cache", !onb);
+  $("#vueSeq").classList.toggle("cache", onb);
+}
+$("#ongOnb").onclick = ()=>mode("onb");
+$("#ongSeq").onclick = ()=>mode("seq");
+
+/* ==================== ONBOARDING ==================== */
+let variante = "V2";
+let perimetre = "D2";
+let passations = [];
+let profilCollecte = null;
+let tick = null;
+
+var rendreListeVar = function(){
+  $("#listeVar").innerHTML = Object.values(VARIANTES).map(v=>
+    `<button class="seq" data-v="${v.id}" aria-pressed="${v.id===variante}">
+      <span class="code">${v.id}</span><span class="nom">${v.nom}</span></button>`).join("");
+  $("#listePer").innerHTML = Object.values(PERIMETRES).map(p=>
+    `<button class="seq" data-p="${p.id}" aria-pressed="${p.id===perimetre}">
+      <span class="code">${p.id}</span><span class="nom">${p.nom}</span></button>`).join("");
+  $("#noteVar").innerHTML = VARIANTES[variante].resume +
+    '<br><br><strong>Périmètre ' + perimetre + '</strong> — ' + PERIMETRES[perimetre].resume;
+};
+
+function chrono(){
+  const s = onbChrono();
+  $("#chrono").textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+  $("#mTemps").textContent = s || "—";
+}
+
+function majMesures(){
+  if(!ONB) return;
+  $("#mInter").textContent = ONB.interactions;
+  $("#mBot").textContent = ONB.msgBot;
+  $("#mUser").textContent = ONB.msgUser;
+  const p = ONB.profil;
+  const li = (ok,t)=>`<div class="${ok?'ok':'ko'}">${ok?'●':'○'} ${t}</div>`;
+  $("#suiviChamps").innerHTML =
+    li(p.lignes.length, "Lignes" + (p.lignes.length ? " : " + p.lignes.join(", ") : "")) +
+    li(p.sens, "Sens" + (p.sens ? " : " + libelleSens(p.sens) : "")) +
+    li(p.jours.length, "Jours : " + p.jours.length + "/7") +
+    li(p.creneauM || p.creneauS, "Créneau" + (p.creneauM ? " M : " + p.creneauM : "") + (p.creneauS ? " · S : " + p.creneauS : "")) +
+    (ONB.perimetre === "D2" ? li(p.montee, "Montée" + (p.montee ? " : " + p.montee.split(" (")[0] : "")) +
+      li(p.descente, "Descente" + (p.descente ? " : " + p.descente.split(" (")[0] : "")) +
+      (p.retourDifferent ? '<div class="ok">● Retour différent déclaré</div>' : "") : "") +
+    (ONB.relances ? `<div style="color:var(--rouge)">↺ ${ONB.relances} relance(s)</div>` : "") +
+    (ONB.corrections ? `<div style="color:var(--rouge)">✎ ${ONB.corrections} correction(s)</div>` : "");
+  chrono();
+}
+
+function rendreFilOnb(){
+  const f = $("#filOnb");
+  f.innerHTML = ONB.fil.map(m=>{
+    if(m.qui === "flow") return flowHTML();
+    return `<div class="bulle ${m.qui}">${esc(m.txt)}<button class="copier" data-txt="${esc(m.txt)}">Copier</button></div>`;
+  }).join("");
+  f.scrollTop = f.scrollHeight;
+  const chat = VARIANTES[ONB.variante].type === "chat";
+  $("#saisieOnb").style.display = chat ? "flex" : "none";
+  $("#entree").disabled = ONB.termine || !ONB.t0;
+  $("#envoyer").disabled = ONB.termine || !ONB.t0;
+}
+
+function flowHTML(){
+  const v = VARIANTES[ONB.variante], p = ONB.profil, j = v.justif;
+  const arrets = ONB.perimetre === "D2" ? arretsDispo(p.lignes) : [];
+  if(ONB.flowEnvoye) return `<div class="bulle out">Formulaire complété ✓</div>`;
+  const pq = t => j ? `<div class="pourquoi">${t}</div>` : "";
+  const opts = (sel) => `<option value="">Choisir…</option>` +
+    arrets.map(a=>`<option ${sel===a?"selected":""}>${esc(a)}</option>`).join("");
+  const besoinS = p.sens === "soir" || p.sens === "les-deux";
+  const besoinM = p.sens === "matin" || p.sens === "les-deux";
+
+  return `<div class="flowcard" id="flowcard">
+    <h3>Vos trajets habituels</h3>
+    <div class="intro">Ces informations servent uniquement à vous alerter. Vous pouvez les modifier à tout moment.</div>
+
+    <div class="champ">
+      <div class="lab">Vos lignes</div>
+      ${pq("Pour ne vous alerter que sur les lignes qui vous concernent.")}
+      <div class="grilleL">${LIGNES.map(l=>
+        `<button class="puce" data-l="${l.n}" style="background:#${l.c}" aria-pressed="${p.lignes.includes(l.n)}">${l.n}</button>`).join("")}</div>
+    </div>
+
+    <div class="champ">
+      <div class="lab">Quand voyagez-vous ?</div>
+      ${pq("Pour ne pas vous écrire à un moment où vous ne voyagez pas.")}
+      <div class="chips">${[["matin","Le matin"],["soir","Le soir"],["les-deux","Matin et soir"]].map(([k,l])=>
+        `<button class="chip" data-sens="${k}" aria-pressed="${p.sens===k}">${l}</button>`).join("")}</div>
+    </div>
+
+    <div class="champ">
+      <div class="lab">Vos jours</div>
+      ${pq("Pour rester silencieux les jours où vous ne prenez pas le bus.")}
+      <div class="chips">${JOURS.map(d=>
+        `<button class="chip" data-j="${d.k}" aria-pressed="${p.jours.includes(d.k)}">${d.l}</button>`).join("")}</div>
+    </div>
+
+    ${besoinM ? `<div class="champ">
+      <div class="lab">Votre départ le matin</div>
+      ${pq("Pour vous prévenir avant que vous ne partiez, pas après.")}
+      <select data-cr="creneauM">${["<option value=''>Choisir…</option>"].concat(
+        CRENEAUX_M.map(c=>`<option ${p.creneauM===c?"selected":""}>${c}</option>`)).join("")}</select>
+    </div>` : ""}
+
+    ${besoinS ? `<div class="champ">
+      <div class="lab">Votre départ le soir</div>
+      ${pq("Le retour n'a pas les mêmes horaires que l'aller.")}
+      <select data-cr="creneauS">${["<option value=''>Choisir…</option>"].concat(
+        CRENEAUX_S.map(c=>`<option ${p.creneauS===c?"selected":""}>${c}</option>`)).join("")}</select>
+    </div>` : ""}
+
+    ${ONB.perimetre === "D2" ? `
+    <div class="champ">
+      <div class="lab">Votre arrêt de montée</div>
+      ${pq("Pour vous proposer une alternative depuis là où vous êtes, sans avoir à vous le redemander.")}
+      <select data-ar="montee" ${arrets.length?"":"disabled"}>${arrets.length?opts(p.montee):"<option>Choisissez d'abord vos lignes</option>"}</select>
+    </div>
+    <div class="champ">
+      <div class="lab">Votre arrêt de descente</div>
+      ${pq("Pour calculer votre heure d'arrivée — l'information que vous avez placée en premier.")}
+      <select data-ar="descente" ${arrets.length?"":"disabled"}>${arrets.length?opts(p.descente):"<option>Choisissez d'abord vos lignes</option>"}</select>
+    </div>
+    ${p.sens === "les-deux" ? `<div class="champ">
+      <div class="chips"><button class="chip" data-retour="1" aria-pressed="${p.retourDifferent}">Mon retour n'est pas le trajet inverse</button></div>
+      ${p.retourDifferent ? `
+        <div style="margin-top:8px">
+          <div class="lab" style="font-size:12.5px">Retour · montée</div>
+          <select data-ar="monteeR">${opts(p.monteeR)}</select>
+          <div class="lab" style="font-size:12.5px;margin-top:7px">Retour · descente</div>
+          <select data-ar="descenteR">${opts(p.descenteR)}</select>
+        </div>` : `<div class="pourquoi" style="margin-top:5px">Par défaut, votre retour est le trajet inverse.</div>`}
+    </div>` : ""}` : ""}
+
+    <button class="envoyer" id="envoyerFlow" ${manque(p, ONB.perimetre).length ? "disabled" : ""}>Valider</button>
+  </div>`;
+}
+
+function lancerOnb(){
+  onbInit(variante, perimetre);
+  const v = VARIANTES[variante];
+  pousse("in", v.accueil);
+  if(v.type === "flow"){ ONB.fil.push({qui:"flow"}); }
+  onbTop();
+  if(tick) clearInterval(tick);
+  tick = setInterval(()=>{ if(ONB && !ONB.termine) chrono(); }, 1000);
+  rendreFilOnb(); majMesures();
+  $("#ctxOnb").textContent = "passation en cours · " + v.nom;
+}
+
+function finirOnb(){
+  ONB.termine = true; ONB.tFin = Date.now();
+  if(tick) clearInterval(tick);
+  const p = ONB.profil;
+  let r = "Voilà ce que j'ai retenu :\n\n🚌 Lignes : " + p.lignes.join(", ") +
+    "\n🕐 " + libelleSens(p.sens) +
+    (p.creneauM ? "\n   ▸ départ matin : " + p.creneauM : "") +
+    (p.creneauS ? "\n   ▸ départ soir : " + p.creneauS : "") +
+    "\n📅 " + p.jours.length + " jour(s) par semaine";
+  if(ONB.perimetre === "D2" && p.montee)
+    r += "\n📍 " + p.montee.split(" (")[0] + " → " + (p.descente||"").split(" (")[0] +
+         (p.sens === "les-deux" ? (p.retourDifferent ? "\n📍 Retour : " +
+            (p.monteeR||"").split(" (")[0] + " → " + (p.descenteR||"").split(" (")[0]
+            : "\n📍 Retour : trajet inverse") : "");
+  r += "\n\nUne erreur ? Répondez MODIFIER.";
+  pousse("in", r);
+  pousse("in", "Deux commandes à retenir :\n\n⏸ PAUSE — je me tais pendant vos congés\n🛑 STOP — je ne vous écris plus du tout\n\nJe ne vous écrirai qu'en cas de perturbation. Bonne route 👋");
+  profilCollecte = JSON.parse(JSON.stringify(p));
+  profilCollecte._perimetre = ONB.perimetre;
+  majProfilActif();
+  rendreFilOnb(); majMesures();
+  $("#ctxOnb").textContent = "passation terminée";
+}
+
+function majProfilActif(){
+  const el = $("#profilActif");
+  if(!profilCollecte){ el.textContent = "Aucun profil collecté. Les séquences utilisent le corridor par défaut."; return; }
+  const p = profilCollecte;
+  el.innerHTML = `<strong>Lignes ${p.lignes.join(", ")}</strong> · ${libelleSens(p.sens).toLowerCase()}` +
+    (p.creneauM ? ` · ${p.creneauM}` : "") + ` · ${p.jours.length} j/sem.` +
+    (p.montee ? `<br>${esc(p.montee.split(" (")[0])} → ${esc((p.descente||"").split(" (")[0])}` : "") +
+    `<br><span style="color:var(--ambre)">Périmètre ${p._perimetre}</span> — ` +
+    (p._perimetre === "D2"
+      ? "l'assistant confirme d'un tap."
+      : "l'assistant devra redemander origine et destination.");
+}
+
+/* --- V1 : traitement d'un message voyageur --- */
+function repondreV1(txt){
+  ONB.interactions++;
+  pousse("out", txt);
+  const avant = JSON.stringify(ONB.profil);
+  extrait(txt, ONB.profil, ONB.perimetre);
+  if(JSON.stringify(ONB.profil) === avant) ONB.corrections++;
+  const m = manque(ONB.profil, ONB.perimetre);
+  if(m.length === 0){ rendreFilOnb(); majMesures(); setTimeout(finirOnb, 320); return; }
+  ONB.relances++;
+  pousse("in", RELANCES[m[0]]);
+  rendreFilOnb(); majMesures();
+}
+
+/* --- passations --- */
+function enregistrer(){
+  if(!ONB || !ONB.t0){ return; }
+  const id = $("#ident").value.trim() || "P-" + (passations.length + 1);
+  passations.push({
+    id, bras: ONB.variante, perimetre: ONB.perimetre, secondes: onbChrono(),
+    interactions: ONB.interactions, msgBot: ONB.msgBot, msgUser: ONB.msgUser,
+    relances: ONB.relances, corrections: ONB.corrections,
+    complet: ONB.termine, abandon: ONB.abandon,
+    lignes: ONB.profil.lignes.join("|")
+  });
+  $("#ident").value = "";
+  rendrePassations();
+}
+
+var rendrePassations = function(){
+  const c = $("#tablePassations");
+  if(!passations.length){ c.innerHTML = '<p class="vide">Aucune passation enregistrée.</p>'; return; }
+  c.innerHTML = `<table class="passations">
+    <tr><th>ID</th><th>Bras</th><th>Sec.</th><th>Msg.</th><th>État</th></tr>
+    ${passations.map(p=>`<tr><td>${esc(p.id)}</td><td>${p.bras}·${p.perimetre}</td><td>${p.secondes}</td>
+      <td>${p.msgBot + p.msgUser}</td>
+      <td style="color:${p.abandon?'var(--rouge)':(p.complet?'var(--vert)':'var(--texte-faible)')}">
+      ${p.abandon?"abandon":(p.complet?"complet":"partiel")}</td></tr>`).join("")}
+  </table>`;
+};
+
+/* --- événements onboarding --- */
+document.addEventListener("click", ev=>{
+  const v = ev.target.closest("#listeVar .seq");
+  if(v){ variante = v.dataset.v; rendreListeVar();
+    if(ONB && !ONB.termine){ onbInit(variante, perimetre); rendreFilOnb(); majMesures();
+      $("#ctxOnb").textContent = "chronomètre de passation"; $("#chrono").textContent = "0:00"; }
+    return; }
+
+  const pb = ev.target.closest("#listePer .seq");
+  if(pb){ perimetre = pb.dataset.p; rendreListeVar();
+    if(ONB && !ONB.termine){ onbInit(variante, perimetre); rendreFilOnb(); majMesures();
+      $("#ctxOnb").textContent = "chronomètre de passation"; $("#chrono").textContent = "0:00"; }
+    return; }
+
+  const rt = ev.target.closest("[data-retour]");
+  if(rt && ONB){ onbTop(); ONB.interactions++;
+    ONB.profil.retourDifferent = !ONB.profil.retourDifferent;
+    rendreFilOnb(); majMesures(); return; }
+
+  const puce = ev.target.closest(".puce");
+  if(puce && ONB){ onbTop(); ONB.interactions++;
+    const n = puce.dataset.l, arr = ONB.profil.lignes, i = arr.indexOf(n);
+    if(i >= 0){ arr.splice(i,1); ONB.corrections++; } else arr.push(n);
+    rendreFilOnb(); majMesures(); return; }
+
+  const cs = ev.target.closest("[data-sens]");
+  if(cs && ONB){ onbTop(); ONB.interactions++;
+    if(ONB.profil.sens) ONB.corrections++;
+    ONB.profil.sens = cs.dataset.sens; rendreFilOnb(); majMesures(); return; }
+
+  const cj = ev.target.closest("[data-j]");
+  if(cj && ONB){ onbTop(); ONB.interactions++; ONB.corrections++;
+    const k = cj.dataset.j, arr = ONB.profil.jours, i = arr.indexOf(k);
+    if(i >= 0) arr.splice(i,1); else arr.push(k);
+    rendreFilOnb(); majMesures(); return; }
+
+  if(ev.target.id === "envoyerFlow" && ONB){
+    ONB.interactions++; ONB.flowEnvoye = true; finirOnb(); return; }
+
+  const cop = ev.target.closest(".copier");
+  if(cop){ navigator.clipboard.writeText(cop.dataset.txt
+      .replace(/&quot;/g,'"').replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&"));
+    cop.textContent = "Copié"; setTimeout(()=>cop.textContent = "Copier", 1100);
+    ev.stopPropagation(); return; }
+});
+
+document.addEventListener("change", ev=>{
+  if(!ONB) return;
+  const cr = ev.target.dataset ? ev.target.dataset.cr : null;
+  const ar = ev.target.dataset ? ev.target.dataset.ar : null;
+  const champ = cr || ar;
+  if(!champ) return;
+  onbTop(); ONB.interactions++;
+  if(ONB.profil[champ]) ONB.corrections++;
+  ONB.profil[champ] = ev.target.value || null;
+  rendreFilOnb(); majMesures();
+});
+
+$("#lancerOnb").onclick = lancerOnb;
+$("#resetOnb").onclick = ()=>{ onbInit(variante, perimetre); if(tick) clearInterval(tick);
+  $("#chrono").textContent = "0:00"; $("#ctxOnb").textContent = "chronomètre de passation";
+  rendreFilOnb(); majMesures(); };
+$("#abandonOnb").onclick = ()=>{ if(!ONB || !ONB.t0) return;
+  ONB.abandon = true; ONB.termine = true; ONB.tFin = Date.now();
+  if(tick) clearInterval(tick);
+  $("#ctxOnb").textContent = "abandon marqué"; rendreFilOnb(); majMesures(); };
+$("#enregistrer").onclick = enregistrer;
+
+$("#envoyer").onclick = ()=>{
+  const t = $("#entree").value.trim();
+  if(!t || !ONB || ONB.termine) return;
+  $("#entree").value = ""; repondreV1(t);
+};
+$("#entree").addEventListener("keydown", e=>{ if(e.key === "Enter") $("#envoyer").click(); });
+
+$("#exportOnb").onclick = ()=>{
+  const head = "id,bras,perimetre,secondes,interactions,msg_assistant,msg_voyageur,relances,corrections,complet,abandon,lignes";
+  const csv = [head].concat(passations.map(p=>
+    [p.id,p.bras,p.perimetre,p.secondes,p.interactions,p.msgBot,p.msgUser,p.relances,p.corrections,
+     p.complet?1:0,p.abandon?1:0,p.lignes].join(","))).join("\n");
+  navigator.clipboard.writeText(csv);
+  $("#exportOnb").textContent = "CSV copié";
+  setTimeout(()=>$("#exportOnb").textContent = "Exporter en CSV", 1200);
+};
+
+/* ==================== SÉQUENCES ==================== */
+let etat = {seq:2, A:"A3", B:"B3", C:"C1", canal:"wa", pas:0};
+const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{20E3}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}]/gu;
+
+function substitue(txt, seq){
+  return txt.replace(/\{\{([A-C])\}\}/g,(_,k)=>(seq.blocs[k] && seq.blocs[k][etat[k]]) || "");
+}
+function versSms(txt){
+  return txt.replace(/━+/g,"").replace(EMOJI,"")
+    .split("\n").map(l=>l.replace(/[ \t]+/g," ").trim()).join("\n")
+    .replace(/\n{3,}/g,"\n\n").trim();
+}
+const segments = n => n<=160 ? 1 : Math.ceil(n/153);
+
+function etapesActives(){
+  return CORPUS[etat.seq].etapes.filter(e=>
+    !e.si || Object.entries(e.si).every(([k,v])=>v.includes(etat[k])));
+}
+function texteDe(e){
+  if(etat.canal === "sms") return e.sms ? e.sms : versSms(substitue(e.txt, CORPUS[etat.seq]));
+  return substitue(e.txt, CORPUS[etat.seq]);
+}
+function rendreListeSeq(){
+  $("#listeSeq").innerHTML = CORPUS.map((s,i)=>
+    `<button class="seq" data-i="${i}" aria-pressed="${i===etat.seq}">
+      <span class="code">${s.id}</span><span class="nom">${s.nom}</span></button>`).join("");
+}
+function rendreHorloge(t){
+  const h = $("#horloge");
+  if(h.textContent === t) return;
+  h.textContent = t; h.classList.remove("bat"); void h.offsetWidth; h.classList.add("bat");
+}
+function rendreSeq(){
+  const seq = CORPUS[etat.seq], actives = etapesActives();
+  etat.pas = Math.min(etat.pas, actives.length);
+  document.querySelectorAll("#listeSeq .seq").forEach(b=>
+    b.setAttribute("aria-pressed", +b.dataset.i === etat.seq));
+  $("#noteSeq").innerHTML = seq.note;
+  $("#contexte").textContent = seq.contexte;
+  $("#etatTel").textContent = etat.canal === "sms" ? "SMS · 36xxx" : "assistant automatique";
+
+  const fil = $("#fil");
+  fil.className = "fil" + (etat.canal === "sms" ? " sms" : "");
+  fil.innerHTML = actives.slice(0, etat.pas).map(e=>{
+    const t = texteDe(e);
+    return `<div class="bulle ${e.c}">${esc(t)}<button class="copier" data-txt="${esc(t)}">Copier</button><div class="tampon">${e.t.replace(":","h")}</div></div>`;
+  }).join("");
+  fil.scrollTop = fil.scrollHeight;
+
+  rendreHorloge(etat.pas > 0 ? actives[etat.pas-1].t.replace(":","h") : "—");
+  $("#compteur").textContent = `${etat.pas} / ${actives.length}`;
+  $("#suivant").disabled = etat.pas >= actives.length;
+  $("#suivant").textContent = etat.pas === 0 ? "Lancer" : "Message suivant";
+
+  ["A","B","C"].forEach(k=>{
+    $("#glose"+k).textContent = GLOSES[k][etat[k]];
+    const utilisee = k === "B" ? seq.etapes.some(e=>e.si && e.si.B) : seq.blocs[k];
+    document.querySelectorAll(`.choix[data-var="${k}"] button`).forEach(b=>{
+      b.setAttribute("aria-pressed", b.dataset.val === etat[k]);
+      b.style.opacity = utilisee ? 1 : .32;
+      b.title = utilisee ? "" : "Sans effet sur cette séquence";
+    });
+  });
+  rendreCout(actives);
+}
+function rendreCout(actives){
+  const seq = CORPUS[etat.seq];
+  let total = 0, seg = 0, emojis = 0, pertes = [];
+  actives.forEach(e=>{
+    const riche = substitue(e.txt, seq), brut = e.sms ? e.sms : versSms(riche);
+    emojis += (riche.match(EMOJI) || []).length;
+    total += brut.length; seg += segments(brut.length);
+    if(e.perte) pertes.push(e.perte);
+  });
+  if(/━/.test(actives.map(e=>e.txt).join("")))
+    pertes.push("Les séparateurs et la hiérarchie visuelle des options disparaissent.");
+  $("#cout").innerHTML = `
+    <div><span class="chiffre">${seg}</span> <span class="unite">SMS</span>
+    &nbsp;·&nbsp; <span class="chiffre">${total}</span> <span class="unite">caractères</span></div>
+    <ul><li>${emojis} pictogramme${emojis>1?"s":""} perdu${emojis>1?"s":""}</li>
+    <li>Gras et indentation perdus</li>
+    ${pertes.map(p=>`<li class="perte">${p}</li>`).join("")}</ul>`;
+}
+
+document.addEventListener("click", ev=>{
+  const s = ev.target.closest("#listeSeq .seq");
+  if(s){ etat.seq = +s.dataset.i; etat.pas = 0; rendreSeq(); return; }
+  const vb = ev.target.closest(".choix[data-var] button");
+  if(vb){ etat[vb.parentElement.dataset.var] = vb.dataset.val;
+    etat.pas = Math.min(etat.pas, etapesActives().length); rendreSeq(); return; }
+  const cb = ev.target.closest("#canal button");
+  if(cb){ etat.canal = cb.dataset.canal;
+    document.querySelectorAll("#canal button").forEach(b=>b.setAttribute("aria-pressed", b === cb));
+    rendreSeq(); return; }
+});
+$("#suivant").onclick = ()=>{ if(etat.pas < etapesActives().length){ etat.pas++; rendreSeq(); } };
+$("#rejouer").onclick = ()=>{ etat.pas = 0; rendreSeq(); };
+$("#toutCopier").onclick = e=>{
+  const txt = etapesActives().map(s=>`[${s.c === "in" ? "ASSISTANT" : "VOYAGEUR"} ${s.t}]\n${texteDe(s)}`).join("\n\n———\n\n");
+  navigator.clipboard.writeText(txt);
+  e.target.textContent = "Copié"; setTimeout(()=>e.target.textContent = "Tout copier", 1100);
+};
+document.addEventListener("keydown", ev=>{
+  if($("#vueSeq").classList.contains("cache")) return;
+  if(ev.target.tagName === "INPUT") return;
+  if(ev.key === "ArrowRight" && etat.pas < etapesActives().length){ etat.pas++; rendreSeq(); }
+  if(ev.key === "ArrowLeft" && etat.pas > 0){ etat.pas--; rendreSeq(); }
+});
+
+
+/* ==================== TABLEAU DE BORD COÛT & SOBRIÉTÉ ==================== */
+/* Hypothèses de trafic par perturbation, selon le périmètre collecté.
+   D1 : l'assistant doit requalifier origine + destination.
+   D2 : il confirme d'un tap.
+   Modifier les valeurs dans data/tarifs.json, pas ici. */
+/* TRAFIC et tarifs de référence : voir data/tarifs.json */
+
+function coutOnboarding(){
+  /* mesuré si une passation existe, sinon valeurs de référence */
+  const ref = TARIFS.onboardingReference;
+  if(passations.length){
+    const m = {};
+    passations.forEach(p=>{
+      m[p.bras] = m[p.bras] || {n:0, s:0};
+      m[p.bras].n++; m[p.bras].s += p.msgBot;
+    });
+    const b = m[variante];
+    if(b) return { template:1, service: Math.max(0, Math.round(b.s / b.n) - 1), mesure:true };
+  }
+  return Object.assign({mesure:false}, ref[variante]);
+}
+
+function euros(x){ return x.toLocaleString("fr-FR",{minimumFractionDigits:0, maximumFractionDigits:0}) + " €"; }
+function nombre(x){ return Math.round(x).toLocaleString("fr-FR"); }
+
+function rendreTdb(){
+  const ab = +$("#hAb").value || 0, pe = +$("#hPe").value || 0;
+  const tp = +$("#hTp").value || 0, sv = +$("#hSv").value || 0;
+  const np = (+$("#hNp").value || 0) / 100;
+
+  const onb = coutOnboarding();
+  const coutOnb = ab * (onb.template * tp + onb.service * sv);
+
+  const parAn = d => {
+    const t = TRAFIC[d];
+    const msgs = ab * pe * (t.template + t.service);
+    return { msgs, cout: ab * pe * (t.template * tp + t.service * sv), octets: ab * pe * t.octets };
+  };
+  const a1 = parAn("D1"), a2 = parAn("D2");
+  const actif = perimetre === "D1" ? a1 : a2;
+  const gain = a1.cout - a2.cout;
+
+  const gaspillage = actif.cout * np;
+  const msgGaspilles = actif.msgs * np;
+
+  $("#tdb").innerHTML = `
+    <div class="sep-titre">Mise en service</div>
+    <div class="ligne-res"><span>Onboarding ${variante}${onb.mesure ? " (mesuré)" : " (référence)"}</span>
+      <span class="val">${euros(coutOnb)}</span></div>
+    <div class="ligne-res"><span>${onb.template + onb.service} message(s) par abonné</span>
+      <span class="val">${nombre(ab * (onb.template + onb.service))}</span></div>
+
+    <div class="sep-titre">Exploitation annuelle · périmètre ${perimetre}</div>
+    <div class="ligne-res fort"><span>Coût annuel</span><span class="val">${euros(actif.cout)}</span></div>
+    <div class="ligne-res"><span>Messages / an</span><span class="val">${nombre(actif.msgs)}</span></div>
+    <div class="ligne-res"><span>Par perturbation</span>
+      <span class="val" style="font-size:13px;font-weight:400;color:var(--texte-faible)">${TRAFIC[perimetre].note}</span></div>
+    <div class="ligne-res ${gain > 0 ? "gain" : ""}"><span>Écart D1 → D2</span>
+      <span class="val">${gain >= 0 ? "−" : "+"} ${euros(Math.abs(gain))} / an</span></div>
+
+    <div class="sep-titre">Sobriété</div>
+    <div class="ligne-res"><span>Volume transmis / an</span>
+      <span class="val">${nombre(actif.octets / 1e6)} Mo</span></div>
+    <div class="ligne-res"><span>Terminaux sollicités / an</span><span class="val">${nombre(actif.msgs)}</span></div>
+    <div class="ligne-res"><span>Messages sans valeur d'usage</span>
+      <span class="val" style="color:var(--rouge)">${nombre(msgGaspilles)}</span></div>
+    <div class="ligne-res"><span>Coût de la non-pertinence</span>
+      <span class="val" style="color:var(--rouge)">${euros(gaspillage)}</span></div>`;
+}
+
+["hAb","hPe","hTp","hSv","hNp"].forEach(id=>{
+  const el = $("#" + id);
+  if(el) el.addEventListener("input", rendreTdb);
+});
+
+/* recalcul quand le contexte change */
+const _rendreListeVar = rendreListeVar;
+rendreListeVar = function(){ _rendreListeVar(); rendreTdb(); };
+const _rendrePassations = rendrePassations;
+rendrePassations = function(){ _rendrePassations(); rendreTdb(); };
+
+
+
+/* ============================================================
+   APP — point d'entrée
+   Charge les données, puis démarre la console.
+   ============================================================ */
+
+async function demarrer(){
+  try {
+    await chargerDonnees();
+  } catch(e){
+    document.body.insertAdjacentHTML("afterbegin",
+      `<div style="background:#5E3E36;color:#F3D9CF;padding:14px 18px;border-radius:3px;
+        margin-bottom:16px;font-size:14px;line-height:1.5">
+        <strong>Données non chargées.</strong> ${e.message}<br>
+        Cette console lit <code>data/*.json</code> : elle doit être servie en HTTP,
+        pas ouverte en <code>file://</code>.<br>
+        Lancez <code>python3 -m http.server 8000</code> à la racine du projet,
+        puis ouvrez <code>http://localhost:8000</code>.<br>
+        Pour un atelier hors ligne, utilisez le fichier autonome produit par
+        <code>python3 tools/build.py</code>.
+      </div>`);
+    return;
+  }
+
+  appliquerHypotheses();
+  rendreListeVar();
+  onbInit(variante, perimetre);
+  rendreFilOnb();
+  majMesures();
+  rendreListeSeq();
+  rendreSeq();
+  rendreTdb();
+}
+
+document.addEventListener("DOMContentLoaded", demarrer);
+
+</script>
+</body>
+</html>

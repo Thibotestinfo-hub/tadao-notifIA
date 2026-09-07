@@ -158,5 +158,24 @@
         "txt": "✅ TADAO Alerte — trafic rétabli\nAssistant automatique TADAO · 7h12\n\nLa ligne 13 circule à nouveau normalement entre Liévin Centre et Lens I.U.T.\n\nVotre retour de cet après-midi n'est pas concerné.\nBonne journée."
       }
     ]
+  },
+  {
+    "id": "S5",
+    "nom": "Notification non pertinente",
+    "contexte": "Lundi 14h08 · perturbation sur une ligne déclarée, hors créneau du voyageur",
+    "note": "Risque n°1 identifié par les participants du Focus Group II, et jusqu'ici le seul non traité dans le corpus (voir CLAUDE.md §10, « Non traité »). Le voyageur a déclaré la ligne 13 pour un trajet du matin (départ 5h46) : une perturbation l'après-midi sur cette même ligne ne le concerne pas, mais la lui signaler quand même est le seul moyen de ne jamais le prendre en défaut. Les deux messages ci-dessous sont <strong>deux variantes du même envoi</strong>, pas deux envois successifs — à comparer en choix forcé au débriefing, comme les variables A et C. Cet axe n'est pas câblé au sélecteur de variantes de la console, qui ne reconnaît que les lettres A à C (`js/console.js`, fonction `substitue`) : une bascule en direct demanderait d'y toucher, hors périmètre de cette modification.",
+    "blocs": {},
+    "etapes": [
+      {
+        "c": "in",
+        "t": "14:08",
+        "txt": "⚠️ TADAO Alerte — perturbation sur une de vos lignes\nAssistant automatique TADAO · mis à jour à 14h08\n\nLa ligne 13 est perturbée cet après-midi entre Liévin Centre et Lens I.U.T (retard estimé : 15 mn, durée : environ 2h).\n\nCette perturbation a lieu en dehors de votre créneau habituel (départ 5h46) : elle ne devrait pas vous concerner. Désolé de vous déranger pour rien — je préfère vous prévenir plutôt que risquer un oubli le jour où ça compte."
+      },
+      {
+        "c": "in",
+        "t": "14:08",
+        "txt": "⚠️ TADAO Alerte — perturbation sur une de vos lignes\nAssistant automatique TADAO · mis à jour à 14h08\n\nLa ligne 13 est perturbée cet après-midi entre Liévin Centre et Lens I.U.T (retard estimé : 15 mn, durée : environ 2h).\n\nElle a lieu en dehors de votre créneau habituel (départ 5h46) et ne devrait donc pas affecter votre trajet. Je vous informe quand même, au cas où vos horaires changeraient aujourd'hui."
+      }
+    ]
   }
 ]
